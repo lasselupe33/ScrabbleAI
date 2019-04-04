@@ -16,7 +16,6 @@ let main argv =
     let board = StandardBoard.mkStandardBoard()
 
     let fuck = 0
+    printfn "%A" (calculatePoints [tripleLetterScore; singleLetterScore; doubleWordScore] [|('Q', 10); ('I', 1); ('N', 1)|])
+
     0;; // return an integer exit code
-
-
-

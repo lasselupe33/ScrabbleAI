@@ -7,8 +7,11 @@
     <ProjectReference Include="..\utils\utils.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GameState.fs" />
     <Compile Include="EvaluateScore.fs" />
     <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="..\ScrabbleUtil.dll" />
   </ItemGroup>
 </Project>
