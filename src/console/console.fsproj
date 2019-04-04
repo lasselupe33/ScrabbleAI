@@ -1,17 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Include="Program.fs" />
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\utils\utils.fsproj" />
-    <ProjectReference Include="..\ScrabbleUtil\ScrabbleUtil.fsproj" />
   </ItemGroup>
-
+  <ItemGroup>
+    <Compile Include="EvaluateScore.fs" />
+    <Compile Include="Program.fs" />
+    <Reference Include="..\ScrabbleUtil.dll" />
+  </ItemGroup>
 </Project>
