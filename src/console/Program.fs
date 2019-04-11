@@ -4,6 +4,7 @@ open ScrabbleServer
 open ScrabbleUtil.ServerCommunication
 open utils
 open console
+open EvaluateScore
 
 let recv play st msg =
     match msg with
@@ -50,6 +51,7 @@ let startGame send (msg : Response) =
      
 [<EntryPoint>]
 let main argv =
+    printfn "%A" (calculatePoints [tripleLetterScore; singleLetterScore; doubleWordScore] [|('Q', 10); ('I', 1); ('N', 1)|])
     let send = Comm.connect ()
     send (startGame send) (SMStartGame(1u, "My game", "", "My name"))
     0 // return an integer exit code
