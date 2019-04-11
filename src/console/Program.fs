@@ -5,12 +5,20 @@ open ScrabbleUtil.ServerCommunication
 open utils
 open console
 open EvaluateScore
+open console.State
+open console
+open console.Utils
 
 let recv play st msg =
     match msg with
     | RCM (CMPlaySuccess(ms, points, newPieces)) ->
         (* Successful play by you. Update your state *)
-        let st' = st // This state needs to be updated
+        let handWithPlayedPiecesRemoved = removeUsedPiecesFromHand st.hand ms
+
+        let updatedMoves = addMovesToMap st.lettersPlaced ms
+        let updatedHand = addPiecesToHand handWithPlayedPiecesRemoved newPieces
+
+        let st' = mkState (st.ownPoints + points) updatedMoves updatedHand  // This state needs to be updated
         play st'
     | RCM (CMPlayed (pid, ms, points)) ->
         (* Successful play by other player. Update your state *)

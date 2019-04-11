@@ -7,6 +7,7 @@
     <ProjectReference Include="..\utils\utils.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Utils.fs" />
     <Compile Include="State.fs" />
     <Compile Include="Print.fs" />
     <Compile Include="Regex.fs" />
