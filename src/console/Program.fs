@@ -70,10 +70,6 @@ let startGame send (msg : Response) =
 let main argv =
     printfn "%A" (calculatePoints [tripleLetterScore; singleLetterScore; doubleWordScore] [|('Q', 10); ('I', 1); ('N', 1)|])
 
-    let exists = isWordValid "HELLO"
-
-    let test = collectWords ['E'; 'H'; 'J'];
-
     let send = Comm.connect ()
     send (startGame send) (SMStartGame(1u, "My game", "", "My name"))
     0 // return an integer exit code

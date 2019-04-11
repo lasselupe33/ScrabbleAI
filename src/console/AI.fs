@@ -5,27 +5,6 @@ open WordFinder
 
 module AI =
 
-    // Gamle metode, bare så du kan appreciate opdateringen, Lasse ;)
-    let collectWordsOld lettersList =
-        let rec aux (letters: char list) (word: string) (acc: string list) =
-            match letters with
-            | [] -> acc
-            | x::xs -> 
-                let newWord = word + string x
-                let validWords = if isWordValid (newWord) then newWord::acc else acc
-                
-                let letterStarts = getAllStarts xs
-                let validWords2 = List.map (fun list -> aux list newWord validWords) letterStarts
-
-                List.reduce ( @ ) validWords2
-        
-        let letterStarts = getAllStarts lettersList
-        let allValidWords = List.map (fun list -> aux list "" []) letterStarts
-
-        Set.toList (Set.ofList (List.reduce ( @ ) allValidWords))    
-        
-
-
 
     // Helper that help find different combinations of valid words based on a 
     // list of chars    
