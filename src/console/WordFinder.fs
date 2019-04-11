@@ -27,6 +27,16 @@ module WordFinder =
                 |> Seq.map (fun x->i::x)
         }
 
+    let getAllStarts (list: char list) =
+        let rec aux n result =     
+            let length = List.length list
+            if (n > 0 && n < length) then
+                aux (n - 1) ((List.permute (fun index -> (index + n) % length) list)::result)
+            else
+                list::result
+
+        aux (list.Length - 1) List.empty
+
     // Helper that creates all possible combinations of a list in a given length n
     let rec comb n l = 
         match n, l with
