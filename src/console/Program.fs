@@ -18,11 +18,12 @@ let recv play st msg =
         let updatedMoves = addMovesToMap st.lettersPlaced ms
         let updatedHand = addPiecesToHand handWithPlayedPiecesRemoved newPieces
 
-        let st' = mkState (st.ownPoints + points) updatedMoves updatedHand  // This state needs to be updated
+        let st' = mkState (st.ownPoints + points) updatedMoves updatedHand st.currentPlayerId st.playerList
         play st'
     | RCM (CMPlayed (pid, ms, points)) ->
         (* Successful play by other player. Update your state *)
-        let st' = st // This state needs to be updated
+        let updatedMoves = addMovesToMap st.lettersPlaced ms
+        let st' = mkState st.ownPoints updatedMoves st.hand st.currentPlayerId st.playerList // This state needs to be updated
         play st'
     | RCM (CMPlayFailed (pid, ms)) ->
         (* Failed play. Update your state *)
@@ -54,7 +55,7 @@ let startGame send (msg : Response) =
     match msg with
     | RCM (CMGameStarted (board, pieces, playerNumber, hand, playerList)) ->
         let hand' = List.fold (fun acc (v, x) -> MultiSet.add v x acc) MultiSet.empty hand
-        playGame send board pieces (State.newState hand')
+        playGame send board pieces (State.newState hand' playerNumber playerList)
     | _ -> failwith "No game has been started yet"
      
 [<EntryPoint>]
