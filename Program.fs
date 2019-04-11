@@ -2,7 +2,6 @@
 
 open ScrabbleServer
 open ScrabbleUtil.ServerCommunication
-open utils
 
 module RegEx =
     open System.Text.RegularExpressions

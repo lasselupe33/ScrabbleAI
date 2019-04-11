@@ -12,6 +12,10 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="..\ScrabbleUtil.dll" />
+    <Reference Include="..\dll\ScrabbleUtil.dll" />
+    <Reference Include="..\dll\server\ScrabbleServer.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="4.6.2" />
   </ItemGroup>
 </Project>
