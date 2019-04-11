@@ -37,18 +37,27 @@ module EvaluateScore
         // inserts the whole word into the function as well
         let prepareTiles (tiles: tile list) = List.map (fun tile -> (fst tile, List.map (fun tileFunc -> (fst tileFunc, insertWordIntoTileFunction (uint32 (getIndex tile)) pieces (snd tileFunc))) (getTileFunctions tile))) tiles
 
+        // Helper that flatten the tiles into a list containing the functions.
+        // It extract the second element of the tuple in the tile, and
+        // extract the functions out of the maps into a list
         let flatten tiles = 
             List.map (fun tile -> (snd tile)) tiles |>
             List.reduce (fun acc sublist -> acc @ sublist)
 
-        let tileFuncComparator e1 e2 =
-            if fst e1 > fst e2 then 1 else -1
+        // Helper that compares the first element of two tuples        
+        let tileFuncComparator t1 t2 =
+            if fst t1 > fst t2 then 1 else -1
 
+        // Helper that sorts a list by comparing the first element of a tuple
         let sortFuncTilesByPriority lst = List.sortWith tileFuncComparator lst
         
+        // Helper that maps over a list of tuples and returns a new list 
+        // containing the second element
         let extract = List.map snd
 
+        // Helper that counts the points by folding over the list of functions,
+        // invoking them and add the results to an accumilator
         let composer = List.fold (fun acc tileFunc -> tileFunc acc) 0
 
-
+        // Calculate points and returns it
         composer (extract (sortFuncTilesByPriority (flatten (prepareTiles tiles))))
