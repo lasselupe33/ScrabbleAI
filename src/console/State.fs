@@ -5,6 +5,8 @@ open ScrabbleUtil
 
 
 module State = 
+    let mutable pieces: Map<uint32,ScrabbleUtil.piece> = Map.empty
+    
     type state = {
         currentPlayerId : uint32
         playerList      : (uint32 * string) list

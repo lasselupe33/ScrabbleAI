@@ -9,6 +9,7 @@ open console.State
 open console
 open console.Utils
 open console.AI
+open WordFinder
 
 let recv play st msg =
     match msg with
@@ -42,6 +43,11 @@ let playGame send board pieces st =
         printfn "\n\n"
         Print.printHand pieces (State.hand st)
 
+        let stopWatch = System.Diagnostics.Stopwatch.StartNew()
+        let hand = convertHandToCharList st.hand
+        let validWords = getValidWords hand
+        stopWatch.Stop();
+         
         printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
         let input =  System.Console.ReadLine()
         let move = RegEx.parseMove input
@@ -55,6 +61,7 @@ let playGame send board pieces st =
 let startGame send (msg : Response) = 
     match msg with
     | RCM (CMGameStarted (board, pieces, playerNumber, hand, playerList)) ->
+        State.pieces <- pieces;
         let hand' = List.fold (fun acc (v, x) -> MultiSet.add v x acc) MultiSet.empty hand
         playGame send board pieces (State.newState hand' playerNumber playerList)
     | _ -> failwith "No game has been started yet"
@@ -63,7 +70,6 @@ let startGame send (msg : Response) =
 let main argv =
     printfn "%A" (calculatePoints [tripleLetterScore; singleLetterScore; doubleWordScore] [|('Q', 10); ('I', 1); ('N', 1)|])
 
-    let exists = isWordValid "HELLO"
     let send = Comm.connect ()
     send (startGame send) (SMStartGame(1u, "My game", "", "My name"))
     0 // return an integer exit code

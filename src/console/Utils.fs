@@ -3,6 +3,7 @@ open utils
 open utils.MultiSet
 open System.IO
 open utils.Dictionary
+open console.State
 
 module Utils =
 
@@ -25,7 +26,6 @@ module Utils =
     }
 
     let generateDict filePath = Seq.fold (fun dict word -> Dictionary.insert word dict) (Dictionary.empty "ABCDEFGHIJKLMNOPQRSTUVWXYZ") (readLines filePath)
-
     let scrabbleDict = generateDict "./EnglishDictionary.txt"
 
     let isWordValid word = Dictionary.lookup word scrabbleDict
