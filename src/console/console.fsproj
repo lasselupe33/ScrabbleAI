@@ -7,7 +7,9 @@
     <ProjectReference Include="..\utils\utils.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GameState.fs" />
+    <Compile Include="State.fs" />
+    <Compile Include="Print.fs" />
+    <Compile Include="Regex.fs" />
     <Compile Include="EvaluateScore.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
