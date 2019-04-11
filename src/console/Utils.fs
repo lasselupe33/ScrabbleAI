@@ -17,6 +17,9 @@ module Utils =
         List.fold (fun set (_, move) -> removePieceFromHand set (fst move)) prevSet ms
 
 
+
+    
+
     // Dictionary related stuff
     let readLines (filePath:string) = seq {
         use sr = new StreamReader (filePath)
