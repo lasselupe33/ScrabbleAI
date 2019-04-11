@@ -8,6 +8,7 @@ open EvaluateScore
 open console.State
 open console
 open console.Utils
+open console.AI
 
 let recv play st msg =
     match msg with
@@ -61,6 +62,8 @@ let startGame send (msg : Response) =
 [<EntryPoint>]
 let main argv =
     printfn "%A" (calculatePoints [tripleLetterScore; singleLetterScore; doubleWordScore] [|('Q', 10); ('I', 1); ('N', 1)|])
+
+    let exists = isWordValid "HELLO"
     let send = Comm.connect ()
     send (startGame send) (SMStartGame(1u, "My game", "", "My name"))
     0 // return an integer exit code

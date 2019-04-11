@@ -9,5 +9,3 @@ module AI =
         while not sr.EndOfStream do
             yield sr.ReadLine ()
     }
-
-    let dict (words: seq<string>) = Seq.fold(fun dict word -> word) Dictionary.empty
