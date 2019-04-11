@@ -59,5 +59,5 @@ module EvaluateScore
         // invoking them and add the results to an accumilator
         let composer = List.fold (fun acc tileFunc -> tileFunc acc) 0
 
-        // Calculate points and return them
+        // Calculate points and returns it
         composer (extract (sortFuncTilesByPriority (flatten (prepareTiles tiles))))
