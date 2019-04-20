@@ -2,6 +2,7 @@ namespace console
 open System.IO
 open Utils
 open WordFinder
+open System.Threading.Tasks
 
 module AI =
 
@@ -11,14 +12,20 @@ module AI =
     let collectWords lettersList =
 
         // First recursive helper 
-        let rec aux letters word acc =
+        let rec aux letters (word: string list) acc =
 
             // Gets a list of char lists of different combinations of each letter
             // starting at index zero
             let letterStarts = getAllStarts letters
 
             // Map over the list of char lists and search for valid words
-            let validWords2 = List.map (fun list -> aux2 list acc word) letterStarts
+            let validWords2 = 
+                if acc = "" then 
+                    let tasks = [for i in 0..(letterStarts.Length - 1) do yield async { return aux2 letterStarts.[i] acc word } ]
+                    Array.toList (Async.RunSynchronously (Async.Parallel tasks))
+                else
+                    List.map (fun list -> aux2 list acc word) letterStarts
+
 
             // Flatten the lists and return a list of all valid words
             List.reduce ( @ ) validWords2

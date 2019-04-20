@@ -45,7 +45,6 @@ let playGame send board pieces st =
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
         let hand = convertHandToCharList st.hand
         let validWords = collectWords hand
-        let test = getAllStarts hand
         stopWatch.Stop();
          
         printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
