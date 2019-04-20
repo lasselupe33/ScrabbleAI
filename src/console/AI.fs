@@ -18,7 +18,9 @@ module AI =
             // starting at index zero
             let letterStarts = getAllStarts letters
 
-            // Map over the list of char lists and search for valid words
+            // Map over the list of char lists and search for valid words, however
+            // on the first run, start the tasks on async threads in order to speed
+            // up computation (went from ~14ms to ~5ms for a hand of 7 pieces)
             let validWords2 = 
                 if acc = "" then 
                     let tasks = [for i in 0..(letterStarts.Length - 1) do yield async { return aux2 letterStarts.[i] acc word } ]
