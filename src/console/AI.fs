@@ -46,7 +46,9 @@ module AI =
                 // Add the char to the word string
                 List.reduce ( @ ) potentialNewWords
 
-
+        // Third and final helper that checks if the passed pieces forms a vaild
+        // word, and in that case append it to the accumulator of valid words, 
+        // and finally continue the process with the remaining pieces of the hand
         and aux3 xs (newPieces: (char * int) list) (acc: (char * int) list list) =
             // If word is valid, then add it to the list of valid words
             let validWords = if isWordValid (convertPiecesToString newPieces) then newPieces::acc else acc
