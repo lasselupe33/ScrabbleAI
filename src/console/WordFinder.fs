@@ -8,10 +8,10 @@ module WordFinder =
     // Simple helper that based on a pieceId extracts the Char that is related to
     // it.
     // NOTE: It doesn't handle wildcards gracefully yet!
-    let getPieceChars pieceId = List.head (List.map fst (Set.toList (Map.find pieceId State.pieces)))
+    let getPiece pieceId = (Set.toList (Map.find pieceId State.pieces))
 
     // Helper that converts the hand of piece identifiers to a list of characters
-    let convertHandToCharList (hand: MultiSet<uint32>) = List.map getPieceChars (MultiSet.toList hand)
+    let convertHandToPieceList (hand: MultiSet<uint32>) = List.map getPiece (MultiSet.toList hand)
 
     // Helper that converts all takes a list and returns all possible permutations
     // of the same length
@@ -27,7 +27,7 @@ module WordFinder =
                 |> Seq.map (fun x->i::x)
         }
 
-    let getAllStarts (list: char list) =
+    let getAllStarts (list: (char * int) list list) =
         let rec aux n result =     
             let length = List.length list
             if (n > 0 && n < length) then

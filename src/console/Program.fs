@@ -43,8 +43,9 @@ let playGame send board pieces st =
         Print.printHand pieces (State.hand st)
 
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
-        let hand = convertHandToCharList st.hand
-        let validWords = collectWords hand
+        let hand = convertHandToPieceList st.hand
+        let testHand = [getPiece 1u;getPiece 1u;getPiece 2u;getPiece 3u;getPiece 4u;getPiece 5u;getPiece 6u];
+        let validWords = collectWords testHand
         stopWatch.Stop();
          
         printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"

@@ -20,6 +20,7 @@ module EvaluateScore
     let tripleWordScore    = addFunc singleLetterScore 1u (fun _ _ p -> p * 3) |> setChar 'd'
 
 
+    // Method used to calculate the amount of points a given word is worth
     let calculatePoints (tiles: tile list) (pieces: (char * int) []): int =
         // Helper used to retrieve the index of a given tile
         let getIndex (tile: tile) = List.findIndex(fun x -> obj.ReferenceEquals(x, tile)) tiles
