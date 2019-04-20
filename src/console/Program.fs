@@ -44,10 +44,10 @@ let playGame send board pieces st =
 
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
         let hand = convertHandToPieceList st.hand
-        let testHand = [getPiece 1u;getPiece 1u;getPiece 2u;getPiece 3u;getPiece 4u;getPiece 5u;getPiece 6u];
+        let testHand = [getPiece 0u;getPiece 1u;getPiece 2u;getPiece 3u;getPiece 4u;getPiece 5u;getPiece 6u];
         let validWords = collectWords testHand
         stopWatch.Stop();
-         
+
         printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
         let input =  System.Console.ReadLine()
         let move = RegEx.parseMove input
@@ -58,14 +58,14 @@ let playGame send board pieces st =
 
 
 
-let startGame send (msg : Response) = 
+let startGame send (msg : Response) =
     match msg with
     | RCM (CMGameStarted (board, pieces, playerNumber, hand, playerList)) ->
         State.pieces <- pieces;
         let hand' = List.fold (fun acc (v, x) -> MultiSet.add v x acc) MultiSet.empty hand
         playGame send board pieces (State.newState hand' playerNumber playerList)
     | _ -> failwith "No game has been started yet"
-     
+
 [<EntryPoint>]
 let main argv =
     printfn "%A" (calculatePoints [tripleLetterScore; singleLetterScore; doubleWordScore] [|('Q', 10); ('I', 1); ('N', 1)|])
