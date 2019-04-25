@@ -22,8 +22,9 @@ let playGame cstream board pieces (st : State.state) =
 
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
         let hand = convertHandToPieceList st.hand
-        let testHand = [getPiece 0u pieces;getPiece 1u pieces;getPiece 2u pieces;getPiece 3u pieces;getPiece 4u pieces;getPiece 5u pieces;getPiece 6u pieces];
-        let validWords = collectWords testHand
+        let testHand = [getPiece 0u pieces;getPiece 1u pieces;getPiece 2u pieces;getPiece 3u pieces;getPiece 4u pieces;getPiece 5u pieces;getPiece 6u pieces]
+        let testHardcodedLetters = [('a', 2); ('e', 4)]
+        let validWords = collectWords testHand testHardcodedLetters
         stopWatch.Stop();
 
         printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
@@ -73,7 +74,7 @@ let setupGame cstream board alphabet words handSize timeout =
             let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
             playGame cstream board pieces (State.newState handSet playerNumber players)
         | msg -> failwith (sprintf "Game initialisation failed. Unexpected message %A" msg)
-        
+
     aux ()
 
 let joinGame port gameId password playerName =
@@ -83,13 +84,13 @@ let joinGame port gameId password playerName =
         send cstream (SMJoinGame (gameId, password, playerName))
 
         match ServerCommunication.recv cstream with
-            | RCM (CMJoinSuccess(board, numberOfPlayers, alphabet, words, handSize, timeout)) -> 
-                setupGame cstream board alphabet words handSize timeout 
+            | RCM (CMJoinSuccess(board, numberOfPlayers, alphabet, words, handSize, timeout)) ->
+                setupGame cstream board alphabet words handSize timeout
             | msg -> failwith (sprintf "Error joining game%A" msg)
 
     }
 
-let startGame port numberOfPlayers = 
+let startGame port numberOfPlayers =
     async {
         let client = new TcpClient(sprintf "%A" (localIP ()), port)
         let cstream = client.GetStream()
@@ -109,7 +110,7 @@ let startGame port numberOfPlayers =
             match ServerCommunication.recv cstream with
             | RCM (CMGameInit gameId) -> gameId
             | msg -> failwith (sprintf "Error initialising game, server sent other message than CMGameInit (should not happen)\n%A" msg)
-            
+
         do! (async { setupGame cstream board alphabet words handSize timeout } ::
              [for i in 2u..numberOfPlayers do yield joinGame port gameId "password" ("Player" + (string i))] |>
              Async.Parallel |> Async.Ignore)
