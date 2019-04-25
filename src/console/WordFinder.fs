@@ -3,12 +3,13 @@ namespace console
 open utils
 open utils.MultiSet
 open Utils
+open ScrabbleUtil
 
 module WordFinder =
     // Simple helper that based on a pieceId extracts the Char that is related to
     // it.
     // NOTE: It doesn't handle wildcards gracefully yet!
-    let getPiece pieceId = (Set.toList (Map.find pieceId State.pieces))
+    let getPiece pieceId (pieces: Map<uint32, piece>) = (Set.toList (Map.find pieceId pieces))
 
     // Helper that converts the hand of piece identifiers to a list of characters
     let convertHandToPieceList (hand: MultiSet<uint32>) = List.map getPiece (MultiSet.toList hand)

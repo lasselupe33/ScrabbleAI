@@ -3,10 +3,7 @@ namespace console
 open utils
 open ScrabbleUtil
 
-
-module State = 
-    let mutable pieces: Map<uint32,ScrabbleUtil.piece> = Map.empty
-    
+module State =     
     type state = {
         currentPlayerId : uint32
         playerList      : (uint32 * string) list

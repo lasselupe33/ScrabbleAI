@@ -1,6 +1,5 @@
 namespace console
 
-open System.IO
 open utils
 
 module Print =
