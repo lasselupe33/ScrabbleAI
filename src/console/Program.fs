@@ -13,7 +13,7 @@ open WordFinder
 
 open System.Net.Sockets
 
-let playGame cstream board pieces (st : State.state) =
+let playGame cstream board pieces (st : State.state) isWordValid =
 
     let rec aux (st : State.state) =
         Print.printBoard board 8 (State.lettersPlaced st)
@@ -23,7 +23,7 @@ let playGame cstream board pieces (st : State.state) =
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
         let hand = convertHandToPieceList st.hand
         let testHand = [getPiece 0u pieces;getPiece 1u pieces;getPiece 2u pieces;getPiece 3u pieces;getPiece 4u pieces;getPiece 5u pieces;getPiece 6u pieces];
-        let validWords = collectWords testHand
+        let validWords = collectWords testHand isWordValid
         stopWatch.Stop();
 
         printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
@@ -69,9 +69,13 @@ let setupGame cstream board alphabet words handSize timeout =
             printfn "Player %s joined" name
             aux ()
         | RCM (CMGameStarted (playerNumber, hand, firstPlayer, pieces, players)) as msg ->
+            // Setup function used to handle word validation checks
+            let scrabbleDict = Seq.fold (fun dict word -> Dictionary.insert word dict) (Dictionary.empty alphabet) (words)
+            let isWordValid word = Dictionary.lookup word scrabbleDict
+
             printfn "Game started %A" msg
             let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
-            playGame cstream board pieces (State.newState handSet playerNumber players)
+            playGame cstream board pieces (State.newState handSet playerNumber players) isWordValid
         | msg -> failwith (sprintf "Game initialisation failed. Unexpected message %A" msg)
         
     aux ()

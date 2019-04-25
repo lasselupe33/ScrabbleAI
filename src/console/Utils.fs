@@ -16,15 +16,3 @@ module Utils =
 
     let removeUsedPiecesFromHand (prevSet: MultiSet<uint32>) (ms: (ScrabbleUtil.coord * (uint32 * (char * int))) list) : MultiSet<uint32> = 
         List.fold (fun set (_, move) -> removePieceFromHand set (fst move)) prevSet ms
-
-    // Dictionary related stuff
-    let readLines (filePath:string) = seq {
-        use sr = new StreamReader (filePath)
-        while not sr.EndOfStream do
-            yield sr.ReadLine ()
-    }
-
-    let generateDict filePath = Seq.fold (fun dict word -> Dictionary.insert word dict) (Dictionary.empty "ABCDEFGHIJKLMNOPQRSTUVWXYZ") (readLines filePath)
-    let scrabbleDict = generateDict "./EnglishDictionary.txt"
-
-    let isWordValid word = Dictionary.lookup word scrabbleDict
