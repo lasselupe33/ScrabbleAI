@@ -31,7 +31,7 @@ module WordFinder =
 
     // Helper that help find different combinations of valid words based on a
     // list of chars
-    let collectWords lettersList isWordValid =
+    let collectWords lettersList (hardcodedLettersList: (char * int) list) isWordValid =
 
         // First recursive helper, with first parameter being the remaining letters
         // to be searched, the second parameter being the current valid words found
@@ -57,10 +57,10 @@ module WordFinder =
             // up computation (went from ~14ms to ~5ms for a hand of 7 pieces)
             let validWords =
                 if acc.Length = 0 then
-                    let tasks = [for i in 0..(filteredList.Length - 1) do yield async { return aux2 filteredList.[i] acc words } ]
+                    let tasks = [for i in 0..(filteredList.Length - 1) do yield async { return aux2 filteredList.[i] acc words  } ]
                     Array.toList (Async.RunSynchronously (Async.Parallel tasks))
                 else
-                    List.map (fun list -> aux2 list acc words) filteredList
+                    List.map (fun list -> aux2 list acc words ) filteredList
 
 
             // Flatten the lists and return a list of all valid words
@@ -70,14 +70,14 @@ module WordFinder =
         and aux2 letters (word: (char * int) list) (acc: (char * int) list list) =
             match letters with
             | [] -> acc
-            | x::xs -> 
-                let potentialNewWords = List.map (fun letter -> aux3 xs (word @ [letter]) acc) x
+            | x::xs ->
+                let potentialNewWords = List.map (fun letter -> aux3 xs (word @ [letter]) acc ) x
 
                 // Add the char to the word string
                 List.reduce ( @ ) potentialNewWords
 
         // Third and final helper that checks if the passed pieces forms a vaild
-        // word, and in that case append it to the accumulator of valid words, 
+        // word, and in that case append it to the accumulator of valid words,
         // and finally continue the process with the remaining pieces of the hand
         and aux3 xs (newPieces: (char * int) list) (acc: (char * int) list list) =
             // If word is valid, then add it to the list of valid words
@@ -88,6 +88,6 @@ module WordFinder =
 
         // Invoke search for all valid words given list of chars
         let allValidWords = aux lettersList [] []
-        
+
         // Remove redundant words and return the list
         Set.toList (Set.ofList (allValidWords))
