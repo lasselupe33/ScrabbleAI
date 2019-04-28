@@ -4,6 +4,7 @@ open ScrabbleUtil
 open utils.MultiSet
 open console.Utils
 open WordFinder
+open System
 
 module WordPlacer =
     type Direction = Down | Right
@@ -65,14 +66,15 @@ module WordPlacer =
             let possibleWordsInDirection = collectWords hand hardcodedCharacters isValidWord maxLength
             List.map (fun word -> insertCoordToLetters word startCoord direction) possibleWordsInDirection
 
-
+        // Internal helper that collects all possibilities for words that hits
+        // the start coordinate in some way in a given direction
         let checkAllPossibilitiesInDirection direction =
             let rec aux index acc =
                 if index = handSize then
                     acc
                 else
                     let newCoord = getNewCoord startCoord direction (index * -1)
-                    (getWordsInDirection newCoord direction)::acc
+                    aux (index + 1) ((getWordsInDirection newCoord direction)::acc)
 
             aux 0 []
 
@@ -92,6 +94,19 @@ module WordPlacer =
         if moves.IsEmpty then
             getAllWordPositions moves board board.center parsedHand isValidWord
         else
-            Map.toList moves |> List.map (fun move -> getAllWordPositions moves board (fst move) parsedHand isValidWord) |> flatten
+            let movesList = Map.toList moves
+            let maxThreads = 8.0
+            let temp = float movesList.Length / maxThreads
+            let amountOfBatches = int (float movesList.Length / temp)
+            let batchSize = int (Math.Ceiling temp)
+
+            let tasks = [for i in 0..(amountOfBatches) do yield async {
+                let maxInBatch = min batchSize (movesList.Length - (i + 1) * batchSize)
+                let subMoves = [for j in 0..(maxInBatch) do yield getAllWordPositions moves board (fst movesList.[i * batchSize + j]) parsedHand isValidWord]
+
+                return subMoves
+            }]
+
+            Array.toList (Async.RunSynchronously (Async.Parallel tasks)) |> fun asyncResult -> flatten (flatten asyncResult)
 
 

@@ -13,6 +13,7 @@ open console.WordPlacer
 open WordFinder
 
 open System.Net.Sockets
+open System
 
 let playGame cstream board pieces (st : State.state) isWordValid =
 
@@ -27,6 +28,7 @@ let playGame cstream board pieces (st : State.state) isWordValid =
         let testHand = [getPiece pieces 1u; getPiece pieces 3u; getPiece pieces 1u]
         let testHardcodedLetters = [(('B', 1), 1); ('A', 4), 2]
         let validWords = collectWords testHand testHardcodedLetters isWordValid 4
+        let test = getValidWordPositions st.lettersPlaced board st.hand isWordValid pieces
         stopWatch.Stop();
 
         printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
@@ -107,7 +109,7 @@ let startGame port numberOfPlayers =
         let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         let handSize = 7u
         let timeout = None
-        let seed = None
+        let seed = Some 100
 
         send cstream (SMStartGame (numberOfPlayers, "My game", "password", "My name", seed, board, pieces,
                                     handSize, alphabet, words, timeout))

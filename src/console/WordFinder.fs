@@ -34,16 +34,16 @@ module WordFinder =
     let mergePiecesAndHardcodedLetters (pieces: (char * int) list) (hardcodedPieces: ((char * int) * int) list) =
 
         // Internal helper that checks whether the passed index match with the
-        // position of any hardcoded piece in the list, if there is, then append 
+        // position of any hardcoded piece in the list, if there is, then append
         // the piece to the accumulator
-        let checkCoordinates (xAcc: (char * int) list) index = 
+        let checkCoordinates (xAcc: (char * int) list) index =
             List.fold (fun acc (hcPiece: ((char * int) * int)) -> if (snd hcPiece) = index then (acc @ [(fst hcPiece)]) else acc) xAcc hardcodedPieces
 
-        // The recursive helper 
+        // The recursive helper
         let rec aux index (acc: (char * int) list) (list: (char * int) list) =
             match list with
-            | [] -> 
-                let newAcc = checkCoordinates acc index 
+            | [] ->
+                let newAcc = checkCoordinates acc index
 
                 if newAcc.Length = acc.Length
                     then acc
@@ -74,11 +74,11 @@ module WordFinder =
         // to find new possible words
         let rec aux (letters: (char * int) list list) (words: (char * int) list list) (acc: (char * int) list) =
 
-            // If the word exceeds the maximum index (which means it will go over the 
-            // board limits), then it will just return the current valid words, else 
+            // If the word exceeds the maximum index (which means it will go over the
+            // board limits), then it will just return the current valid words, else
             // it will continue its recursive run
             if maxIndex <= (acc.Length + hardcodedLettersList.Length)
-                then 
+                then
                     words
                 else
                     // Gets a list of char lists of different first letter combinations
@@ -94,26 +94,19 @@ module WordFinder =
                         List.fold (fun (acc: (char * int) list list list) (list: (char * int) list list) ->
                                     if contains acc list then acc else list::acc) [] letterStarts
 
-                    // Map over the list of char lists and search for valid words, however
-                    // on the first run, start the tasks on async threads in order to speed
-                    // up computation (went from ~14ms to ~5ms for a hand of 7 pieces)
-                    let validWords =
-                        if acc.Length = 0 then
-                            let tasks = [for i in 0..(filteredList.Length - 1) do yield async { return aux2 filteredList.[i] acc words  } ]
-                            Array.toList (Async.RunSynchronously (Async.Parallel tasks))
-                        else
-                            List.map (fun list -> aux2 list acc words ) filteredList
+                    // Map over the list of char lists and search for valid words
+                    let validWords = List.map (fun list -> aux2 list acc words ) filteredList
 
 
                     // Flatten the lists and return a list of all valid words
-                    List.reduce ( @ ) validWords               
+                    List.reduce ( @ ) validWords
 
         // Second recursive helper, which ensures that wildcards are treated properly.
         and aux2 letters (word: (char * int) list) (acc: (char * int) list list) =
             match letters with
             | [] -> acc
             | x::xs ->
-                let potentialNewWords = List.map (fun letter -> aux3 xs (word @ [letter]) acc ) x
+                let potentialNewWords = List.map (fun letter -> aux3 xs (word @ [letter]) acc) x
 
                 // Add the char to the word string
                 List.reduce ( @ ) potentialNewWords
@@ -127,7 +120,7 @@ module WordFinder =
 
             // If word is valid, then add it to the list of valid words
             let validWords = if isWordValid (convertPiecesToString newPiecesWithHardcoded)
-                                then newPiecesWithHardcoded::acc 
+                                then newPiecesWithHardcoded::acc
                                 else acc
 
             // Call first recursive function with the new word and list
