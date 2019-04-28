@@ -24,11 +24,6 @@ module WordPlacer =
     let getValidWordPositions (moves: Map<ScrabbleUtil.coord, char * int>) (board: board) (hand: MultiSet<uint32>) isValidWord pieces =
         let parsedHand = convertHandToPieceList hand pieces
 
-        if moves.IsEmpty then
-            let possibleWords = collectWords parsedHand [] isValidWord
-            let placeableWords = List.filter (canPlaceWordOnBoard board) possibleWords
-            0
-        else    
-            0
+        0
 
 
