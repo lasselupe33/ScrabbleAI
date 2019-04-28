@@ -9,6 +9,7 @@ open EvaluateScore
 open console.State
 open console.AI
 open console.Utils
+open console.WordPlacer
 open WordFinder
 
 open System.Net.Sockets
