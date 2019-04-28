@@ -22,7 +22,7 @@ let playGame cstream board pieces (st : State.state) isWordValid =
 
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
         let hand = convertHandToPieceList st.hand
-        let testHand = [getPiece 0u pieces;getPiece 1u pieces;getPiece 2u pieces;getPiece 3u pieces;getPiece 4u pieces;getPiece 5u pieces;getPiece 6u pieces]
+        let testHand = [getPiece pieces 0u;getPiece pieces 1u;getPiece pieces 2u;getPiece pieces 3u;getPiece pieces 4u;getPiece pieces 5u;getPiece pieces 6u]
         let testHardcodedLetters = [('a', 2); ('e', 4)]
         let validWords = collectWords testHand testHardcodedLetters isWordValid
         stopWatch.Stop();
