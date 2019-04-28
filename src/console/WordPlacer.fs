@@ -16,7 +16,7 @@ module WordPlacer =
     let getNewCoord coord direction index =
         match direction with
         | Down -> (fst coord, snd coord + index)
-        | Right -> (fst coord + index, snd coord + index)
+        | Right -> (fst coord + index, snd coord)
 
     // Method that'll extract any pieces that are already placed on the board
     // in the direction we're specified with a given start coordinate,
@@ -61,9 +61,9 @@ module WordPlacer =
     let getAllWordPositions (moves) (board: board) (startCoord: coord) (hand: (char * int) list list) isValidWord =
         // Internal helper that extracts all possible positions a single word can
         // remain within
-        let getWordsInDirection startCoord direction =
+        let getWordsInDirection startCoord direction minLength =
             let (maxLength, hardcodedCharacters) = extractBoardMetaInDirection moves board startCoord direction
-            let possibleWordsInDirection = collectWords hand hardcodedCharacters isValidWord maxLength
+            let possibleWordsInDirection = collectWords hand hardcodedCharacters isValidWord minLength maxLength
             List.map (fun word -> insertCoordToLetters word startCoord direction) possibleWordsInDirection
 
         // Internal helper that collects all possibilities for words that hits
@@ -74,7 +74,7 @@ module WordPlacer =
                     acc
                 else
                     let newCoord = getNewCoord startCoord direction (index * -1)
-                    aux (index + 1) ((getWordsInDirection newCoord direction)::acc)
+                    aux (index + 1) ((getWordsInDirection newCoord direction (index + 1))::acc)
 
             aux 0 []
 
