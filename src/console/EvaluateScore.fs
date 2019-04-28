@@ -3,9 +3,9 @@ module EvaluateScore
     type tile = char * Map<uint32, uint32 -> (char * int)[] -> int -> int>
 
     let emptyTile = (' ', Map.empty)
-    let addFunc (t : tile) p f : tile = 
+    let addFunc (t : tile) p f : tile =
         let (c, m) = t
-        (c, 
+        (c,
          match Map.tryFind p m with
          | Some f' -> Map.add p (fun i cs -> f i cs >> f' i cs) m
          | None    -> Map.add p f m)
@@ -21,7 +21,7 @@ module EvaluateScore
 
 
     // Method used to calculate the amount of points a given word is worth
-    let calculatePoints (tiles: tile list) (pieces: (char * int) []): int =
+    let calculatePoints (tiles: tile list) (pieces: (char * int)[]): int =
         // Helper used to retrieve the index of a given tile
         let getIndex (tile: tile) = List.findIndex(fun x -> obj.ReferenceEquals(x, tile)) tiles
 
@@ -41,18 +41,18 @@ module EvaluateScore
         // Helper that flatten the tiles into a list containing the functions.
         // It extract the second element of the tuple in the tile, and
         // extract the functions out of the maps into a list
-        let flatten tiles = 
+        let flatten tiles =
             List.map (fun tile -> (snd tile)) tiles |>
             List.reduce (fun acc sublist -> acc @ sublist)
 
-        // Helper that compares the first element of two tuples        
+        // Helper that compares the first element of two tuples
         let tileFuncComparator t1 t2 =
             if fst t1 > fst t2 then 1 else -1
 
         // Helper that sorts a list by comparing the first element of a tuple
         let sortFuncTilesByPriority lst = List.sortWith tileFuncComparator lst
-        
-        // Helper that maps over a list of tuples and returns a new list 
+
+        // Helper that maps over a list of tuples and returns a new list
         // containing the second element
         let extract = List.map snd
 

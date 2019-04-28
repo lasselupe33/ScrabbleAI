@@ -9,6 +9,7 @@ open EvaluateScore
 open console.State
 open console.AI
 open console.Utils
+open console.WordPlacer
 open WordFinder
 
 open System.Net.Sockets
@@ -23,8 +24,9 @@ let playGame cstream board pieces (st : State.state) isWordValid =
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
         let hand = convertHandToPieceList st.hand
         let testHand = [getPiece pieces 0u;getPiece pieces 1u;getPiece pieces 2u;getPiece pieces 3u;getPiece pieces 4u;getPiece pieces 5u;getPiece pieces 6u]
-        let testHardcodedLetters = [('a', 2); ('e', 4)]
+        let testHardcodedLetters = [('A', 2); ('E', 4)]
         let validWords = collectWords testHand testHardcodedLetters isWordValid
+        let temp = getAllWordPositions board (0, 0) testHand
         stopWatch.Stop();
 
         printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
