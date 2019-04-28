@@ -9,10 +9,10 @@ module WordFinder =
     // Simple helper that based on a pieceId extracts the Char that is related to
     // it.
     // NOTE: It doesn't handle wildcards gracefully yet!
-    let getPiece pieceId (pieces: Map<uint32, piece>) = (Set.toList (Map.find pieceId pieces))
+    let getPiece (pieces: Map<uint32, piece>) pieceId = (Set.toList (Map.find pieceId pieces))
 
     // Helper that converts the hand of piece identifiers to a list of characters
-    let convertHandToPieceList (hand: MultiSet<uint32>) = List.map getPiece (MultiSet.toList hand)
+    let convertHandToPieceList (hand: MultiSet<uint32>) pieces = List.map (getPiece pieces) (MultiSet.toList hand)
 
     // Helper that returns a list of all possible start combinations of a list
     // e.g [a,b,c,d] -> [[a,b,c,d], [b,a,c,d]. [c,a,b,d], [d,a,b,c]]
