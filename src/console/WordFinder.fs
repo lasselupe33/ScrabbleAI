@@ -17,7 +17,7 @@ module WordFinder =
     // Helper that returns a list of all possible start combinations of a list
     // e.g [a,b,c,d] -> [[a,b,c,d], [b,a,c,d]. [c,a,b,d], [d,a,b,c]]
     let getAllStarts (list: (char * int) list list) =
-        let rec aux n result =     
+        let rec aux n result =
             let length = List.length list
             if (n > 0 && n < length) then
                 aux (n - 1) ((List.permute (fun index -> (index + n) % length) list)::result)
@@ -28,6 +28,27 @@ module WordFinder =
 
     let getPieceChar (piece: char * int) = fst piece
     let convertPiecesToString (pieces: (char * int) list) = List.fold (fun (acc: string) (piece: char * int)  -> acc + string (getPieceChar piece)) "" pieces
+
+    let mergePiecesAndHardcodedLetters (pieces: (char * int) list) (hardcodedPieces: (char * int) list) =
+
+        let rec aux index (acc: (char * int) list) (list: (char * int) list) =
+            match list with
+            | [] -> acc
+            | x::xs ->
+                let newAcc = List.fold (fun nAcc (hcPiece: (char * int)) -> if (snd hcPiece) = index then (hcPiece::nAcc) else nAcc) acc hardcodedPieces
+
+                if obj.ReferenceEquals(acc, newAcc)
+                    then aux (index + 1) (x::acc) xs
+                    else aux (index + 1) newAcc list
+
+        aux 0 [] pieces
+
+    let checkWord (pieces: (char * int) list) (hardcodedPieces: (char * int) list) =
+        if hardcodedPieces.IsEmpty
+            then convertPiecesToString pieces
+            else convertPiecesToString (mergePiecesAndHardcodedLetters pieces hardcodedPieces)
+
+
 
     // Helper that help find different combinations of valid words based on a
     // list of chars
@@ -81,7 +102,7 @@ module WordFinder =
         // and finally continue the process with the remaining pieces of the hand
         and aux3 xs (newPieces: (char * int) list) (acc: (char * int) list list) =
             // If word is valid, then add it to the list of valid words
-            let validWords = if isWordValid (convertPiecesToString newPieces) then newPieces::acc else acc
+            let validWords = if isWordValid (checkWord newPieces hardcodedLettersList) then newPieces::acc else acc
 
             // Call first recursive function with the new word and list
             aux xs validWords newPieces
