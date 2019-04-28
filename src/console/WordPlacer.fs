@@ -62,7 +62,7 @@ module WordPlacer =
         // remain within
         let getWordsInDirection startCoord direction =
             let (maxLength, hardcodedCharacters) = extractBoardMetaInDirection moves board startCoord direction
-            let possibleWordsInDirection = collectWords hand hardcodedCharacters isValidWord
+            let possibleWordsInDirection = collectWords hand hardcodedCharacters isValidWord maxLength
             List.map (fun word -> insertCoordToLetters word startCoord direction) possibleWordsInDirection
 
 

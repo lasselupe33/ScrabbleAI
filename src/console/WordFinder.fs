@@ -29,30 +29,44 @@ module WordFinder =
     let getPieceChar (piece: char * int) = fst piece
     let convertPiecesToString (pieces: (char * int) list) = List.fold (fun (acc: string) (piece: char * int)  -> acc + string (getPieceChar piece)) "" pieces
 
-    let mergePiecesAndHardcodedLetters (pieces: (char * int) list) (hardcodedPieces: (char * int) list) =
+    // Helper to make a list consisting of merging the pieces of the hand and
+    // the hardcoded letters from the board together to one list
+    let mergePiecesAndHardcodedLetters (pieces: (char * int) list) (hardcodedPieces: ((char * int) * int) list) =
 
+        // Internal helper that checks whether the passed index match with the
+        // position of any hardcoded piece in the list, if there is, then append 
+        // the piece to the accumulator
+        let checkCoordinates (xAcc: (char * int) list) index = 
+            List.fold (fun acc (hcPiece: ((char * int) * int)) -> if (snd hcPiece) = index then (acc @ [(fst hcPiece)]) else acc) xAcc hardcodedPieces
+
+        // The recursive helper 
         let rec aux index (acc: (char * int) list) (list: (char * int) list) =
             match list with
-            | [] -> acc
-            | x::xs ->
-                let newAcc = List.fold (fun nAcc (hcPiece: (char * int)) -> if (snd hcPiece) = index then (hcPiece::nAcc) else nAcc) acc hardcodedPieces
+            | [] -> 
+                let newAcc = checkCoordinates acc index 
 
-                if obj.ReferenceEquals(acc, newAcc)
-                    then aux (index + 1) (x::acc) xs
+                if newAcc.Length = acc.Length
+                    then acc
+                    else aux (index + 1) newAcc list
+            | x::xs ->
+                let newAcc = checkCoordinates acc index
+
+                if newAcc.Length = acc.Length
+                    then aux (index + 1) (acc @ [x]) xs
                     else aux (index + 1) newAcc list
 
         aux 0 [] pieces
 
-    let checkWord (pieces: (char * int) list) (hardcodedPieces: (char * int) list) =
+    let checkWord (pieces: (char * int) list) (hardcodedPieces: ((char * int) * int) list) =
         if hardcodedPieces.IsEmpty
-            then convertPiecesToString pieces
-            else convertPiecesToString (mergePiecesAndHardcodedLetters pieces hardcodedPieces)
+            then pieces
+            else mergePiecesAndHardcodedLetters pieces hardcodedPieces
 
 
 
     // Helper that help find different combinations of valid words based on a
     // list of chars
-    let collectWords lettersList (hardcodedLettersList: (char * int) list) isWordValid =
+    let collectWords lettersList (hardcodedLettersList: ((char * int) * int) list) isWordValid maxIndex =
 
         // First recursive helper, with first parameter being the remaining letters
         // to be searched, the second parameter being the current valid words found
@@ -60,32 +74,39 @@ module WordFinder =
         // to find new possible words
         let rec aux (letters: (char * int) list list) (words: (char * int) list list) (acc: (char * int) list) =
 
-            // Gets a list of char lists of different first letter combinations
-            let letterStarts = getAllStarts letters
-
-            // Internal helper function to determine if the same first letter exists
-            // within one of the other lists, if it does it returns true
-            let contains (list: (char * int) list list list) (elm: (char * int) list list) =
-                List.exists (fun (l: (char * int) list list) -> obj.ReferenceEquals(l.Head, elm.Head)) list
-
-            // Filter the lists out that contains the same first letter
-            let filteredList =
-                List.fold (fun (acc: (char * int) list list list) (list: (char * int) list list) ->
-                            if contains acc list then acc else list::acc) [] letterStarts
-
-            // Map over the list of char lists and search for valid words, however
-            // on the first run, start the tasks on async threads in order to speed
-            // up computation (went from ~14ms to ~5ms for a hand of 7 pieces)
-            let validWords =
-                if acc.Length = 0 then
-                    let tasks = [for i in 0..(filteredList.Length - 1) do yield async { return aux2 filteredList.[i] acc words  } ]
-                    Array.toList (Async.RunSynchronously (Async.Parallel tasks))
+            // If the word exceeds the maximum index (which means it will go over the 
+            // board limits), then it will just return the current valid words, else 
+            // it will continue its recursive run
+            if maxIndex <= (acc.Length + hardcodedLettersList.Length)
+                then 
+                    words
                 else
-                    List.map (fun list -> aux2 list acc words ) filteredList
+                    // Gets a list of char lists of different first letter combinations
+                    let letterStarts = getAllStarts letters
+
+                    // Internal helper function to determine if the same first letter exists
+                    // within one of the other lists, if it does it returns true
+                    let contains (list: (char * int) list list list) (elm: (char * int) list list) =
+                        List.exists (fun (l: (char * int) list list) -> obj.ReferenceEquals(l.Head, elm.Head)) list
+
+                    // Filter the lists out that contains the same first letter
+                    let filteredList =
+                        List.fold (fun (acc: (char * int) list list list) (list: (char * int) list list) ->
+                                    if contains acc list then acc else list::acc) [] letterStarts
+
+                    // Map over the list of char lists and search for valid words, however
+                    // on the first run, start the tasks on async threads in order to speed
+                    // up computation (went from ~14ms to ~5ms for a hand of 7 pieces)
+                    let validWords =
+                        if acc.Length = 0 then
+                            let tasks = [for i in 0..(filteredList.Length - 1) do yield async { return aux2 filteredList.[i] acc words  } ]
+                            Array.toList (Async.RunSynchronously (Async.Parallel tasks))
+                        else
+                            List.map (fun list -> aux2 list acc words ) filteredList
 
 
-            // Flatten the lists and return a list of all valid words
-            List.reduce ( @ ) validWords
+                    // Flatten the lists and return a list of all valid words
+                    List.reduce ( @ ) validWords               
 
         // Second recursive helper, which ensures that wildcards are treated properly.
         and aux2 letters (word: (char * int) list) (acc: (char * int) list list) =
@@ -101,8 +122,13 @@ module WordFinder =
         // word, and in that case append it to the accumulator of valid words,
         // and finally continue the process with the remaining pieces of the hand
         and aux3 xs (newPieces: (char * int) list) (acc: (char * int) list list) =
+
+            let newPiecesWithHardcoded = checkWord newPieces hardcodedLettersList
+
             // If word is valid, then add it to the list of valid words
-            let validWords = if isWordValid (checkWord newPieces hardcodedLettersList) then newPieces::acc else acc
+            let validWords = if isWordValid (convertPiecesToString newPiecesWithHardcoded)
+                                then newPiecesWithHardcoded::acc 
+                                else acc
 
             // Call first recursive function with the new word and list
             aux xs validWords newPieces
