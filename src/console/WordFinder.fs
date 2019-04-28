@@ -82,20 +82,23 @@ module WordFinder =
 
     // Helper that help find different combinations of valid words based on a
     // list of chars
-    let collectWords lettersList (hardcodedLettersList: ((char * int) * int) list) isWordValid maxIndex =
+    let collectWords lettersList (hardcodedLettersList: ((char * int) * int) list) isWordValid maxLength =
+
+        let minLength = 
+            List.fold (fun acc elm -> (snd elm)::acc) [] hardcodedLettersList |> List.min
 
         // First recursive helper, with first parameter being the remaining letters
         // to be searched, the second parameter being the current valid words found
         // and the accumulator being the "word" (list of pieces) that is currently being processed
         // to find new possible words
-        let rec aux (letters: (char * int) list list) (words: (char * int) list list) (acc: (char * int) list) =
+        let rec aux (letters: (char * int) list list) (acc: (char * int) list) (currentValidWords: (char * int) list list)  =
 
             // If the word exceeds the maximum index (which means it will go over the 
             // board limits), then it will just return the current valid words, else 
             // it will continue its recursive run
-            if maxIndex <= (acc.Length + hardcodedLettersList.Length)
+            if maxLength <= (acc.Length + hardcodedLettersList.Length)
                 then 
-                    words
+                    currentValidWords
                 else
                     // Gets a list of char lists of different first letter combinations
                     let letterStarts = getAllStarts letters
@@ -115,21 +118,21 @@ module WordFinder =
                     // up computation (went from ~14ms to ~5ms for a hand of 7 pieces)
                     let validWords =
                         if acc.Length = 0 then
-                            let tasks = [for i in 0..(filteredList.Length - 1) do yield async { return aux2 filteredList.[i] acc words  } ]
+                            let tasks = [for i in 0..(filteredList.Length - 1) do yield async { return aux2 filteredList.[i] acc currentValidWords  } ]
                             Array.toList (Async.RunSynchronously (Async.Parallel tasks))
                         else
-                            List.map (fun list -> aux2 list acc words ) filteredList
+                            List.map (fun list -> aux2 list acc currentValidWords ) filteredList
 
 
                     // Flatten the lists and return a list of all valid words
                     List.reduce ( @ ) validWords               
 
         // Second recursive helper, which ensures that wildcards are treated properly.
-        and aux2 letters (word: (char * int) list) (acc: (char * int) list list) =
+        and aux2 letters (acc: (char * int) list) (currentValidWords: (char * int) list list) =
             match letters with
-            | [] -> acc
+            | [] -> currentValidWords
             | x::xs ->
-                let potentialNewWords = List.map (fun letter -> aux3 xs (word @ [letter]) acc ) x
+                let potentialNewWords = List.map (fun letter -> aux3 xs (acc @ [letter]) currentValidWords ) x
 
                 // Add the char to the word string
                 List.reduce ( @ ) potentialNewWords
@@ -137,17 +140,17 @@ module WordFinder =
         // Third and final helper that checks if the passed pieces forms a vaild
         // word, and in that case append it to the accumulator of valid words,
         // and finally continue the process with the remaining pieces of the hand
-        and aux3 xs (newPieces: (char * int) list) (acc: (char * int) list list) =
+        and aux3 xs (acc: (char * int) list) (currentValidWords: (char * int) list list) =
 
-            let newPiecesWithHardcoded = checkWord newPieces hardcodedLettersList
+            let newPiecesWithHardcoded = checkWord acc hardcodedLettersList
 
             // If word is valid, then add it to the list of valid words
-            let validWords = if isWordValid (convertPiecesToString newPiecesWithHardcoded)
-                                then newPiecesWithHardcoded::acc 
-                                else acc
+            let validWords = if (acc.Length >= minLength) && isWordValid (convertPiecesToString newPiecesWithHardcoded)
+                                then newPiecesWithHardcoded::currentValidWords 
+                                else currentValidWords
 
             // Call first recursive function with the new word and list
-            aux xs validWords newPieces
+            aux xs acc validWords
 
         // Invoke search for all valid words given list of chars
         let allValidWords = aux lettersList [] []
