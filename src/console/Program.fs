@@ -22,10 +22,9 @@ let playGame cstream board pieces (st : State.state) isWordValid =
 
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
         let hand = convertHandToPieceList st.hand
-        //let testHand = [getPiece pieces 0u;getPiece pieces 1u;getPiece pieces 2u;getPiece pieces 3u;getPiece pieces 4u;getPiece pieces 5u;getPiece pieces 6u]
-        let testHand = [getPiece pieces 1u; getPiece pieces 3u; getPiece pieces 1u]
+        let testHand = [getPiece pieces 0u;getPiece pieces 1u;getPiece pieces 2u;getPiece pieces 3u;getPiece pieces 4u;getPiece pieces 5u;getPiece pieces 6u]
         let testHardcodedLetters = [(('B', 1), 1); ('A', 4), 2]
-        let validWords = collectWords testHand testHardcodedLetters isWordValid 4
+        let validWords = collectWords testHand testHardcodedLetters isWordValid 5
         stopWatch.Stop();
 
         printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"

@@ -37,31 +37,47 @@ module WordFinder =
         // position of any hardcoded piece in the list, if there is, then append 
         // the piece to the accumulator
         let checkCoordinates (xAcc: (char * int) list) index = 
-            List.fold (fun acc (hcPiece: ((char * int) * int)) -> if (snd hcPiece) = index then (acc @ [(fst hcPiece)]) else acc) xAcc hardcodedPieces
+            List.fold (fun acc (hcPiece: ((char * int) * int)) -> 
+                if (snd hcPiece) = index then (acc @ [(fst hcPiece)]) else acc) xAcc hardcodedPieces
 
-        // The recursive helper 
+        // The recursive helper that 
         let rec aux index (acc: (char * int) list) (list: (char * int) list) =
             match list with
             | [] -> 
+                // Even though it has hit base case, there could still
+                // be hardcoded pieces to add 
                 let newAcc = checkCoordinates acc index 
 
+                // If lenghts are the same...
                 if newAcc.Length = acc.Length
+                    // ...there was no hardcoded piece added on that index,
+                    // just return acc and end the recursive process
                     then acc
+                    // ...else continue the recursive process
                     else aux (index + 1) newAcc list
             | x::xs ->
+                // Check if any hardcoded piece match current index
                 let newAcc = checkCoordinates acc index
 
+                // If lenghts are the same...
                 if newAcc.Length = acc.Length
+                    // ...there was no hardcoded piece added on that index,
+                    // append normal piece instead and proceed...
                     then aux (index + 1) (acc @ [x]) xs
+                    // ...else pass the newAcc and old list instead, as the
+                    // hardcoded piece have a place on the current index
                     else aux (index + 1) newAcc list
 
+        // Begin recursive progress on index 0 and with an 
+        // empty accumulator
         aux 0 [] pieces
 
+    // Helper that evaluates whether any hardcoded pieces should be taken into
+    // consideration
     let checkWord (pieces: (char * int) list) (hardcodedPieces: ((char * int) * int) list) =
         if hardcodedPieces.IsEmpty
             then pieces
             else mergePiecesAndHardcodedLetters pieces hardcodedPieces
-
 
 
     // Helper that help find different combinations of valid words based on a
