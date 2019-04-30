@@ -9,6 +9,9 @@ open System
 module WordPlacer =
     type Direction = Down | Right
 
+    // Maps a direction, startCoord, a list of hardcoded chars and the current hand to a matching result
+    let mutable cache: Map<(Direction * coord * ((char * int) * int) list * (char * int) list list), (coord * (char * int)) list list> = Map.empty
+
     let handSize = 7
 
     // Very simple helper that returns a new coordinate based on a direction and
@@ -25,24 +28,33 @@ module WordPlacer =
     // Furthermore it also determines how long a word in the given direction can
     // possible by, based on holes in board, hardcoded characters and size of hand
     let extractBoardMetaInDirection (moves:  Map<ScrabbleUtil.coord, char * int>) (board: board) coord direction =
-        let rec aux index (hardcodedCharacters: ((char * int) * int) list) =
-            if index = (handSize + hardcodedCharacters.Length) then
-                (index, hardcodedCharacters)
+        let rec getRealStartCoord startCoord =
+            let coordToCheck = getNewCoord startCoord direction (-1)
+
+            if (moves.ContainsKey coordToCheck) then
+                getRealStartCoord coordToCheck
             else
-                let newCoord = getNewCoord coord direction index
+                startCoord
+
+        
+        let rec aux index (hardcodedCharacters: ((char * int) * int) list) startCoord =
+            if index = (handSize + hardcodedCharacters.Length) then
+                (startCoord, index, hardcodedCharacters)
+            else
+                let newCoord = getNewCoord startCoord direction index
 
                 // Check if we've reached the end or a hole in the board
                 if Option.isNone (board.tiles newCoord) then
-                    (index, hardcodedCharacters)
+                    (startCoord, index, hardcodedCharacters)
                 else
                     let newHardcoded =
                         match Map.tryFind newCoord moves with
                         | Some piece -> ((piece, index)::hardcodedCharacters)
                         | None -> hardcodedCharacters
 
-                    aux (index + 1) newHardcoded
+                    aux (index + 1) newHardcoded startCoord
 
-        aux 0 []
+        aux 0 [] (getRealStartCoord coord)
 
     // Helper that'll take a word (list of chars with points) and a start coordinate
     // and then add corresponding coordinates to the pieces based on direction.
@@ -62,9 +74,14 @@ module WordPlacer =
         // Internal helper that extracts all possible positions a single word can
         // remain within
         let getWordsInDirection startCoord direction minLength =
-            let (maxLength, hardcodedCharacters) = extractBoardMetaInDirection moves board startCoord direction
-            let possibleWordsInDirection = collectWords hand hardcodedCharacters isValidWord minLength maxLength
-            List.map (fun word -> insertCoordToLetters word startCoord direction) possibleWordsInDirection
+            let (realStartCoord, maxLength, hardcodedCharacters) = extractBoardMetaInDirection moves board startCoord direction
+            if Map.containsKey (direction, realStartCoord, hardcodedCharacters, hand) cache then
+                Map.find (direction, realStartCoord, hardcodedCharacters, hand) cache
+            else
+                let possibleWordsInDirection = collectWords hand hardcodedCharacters isValidWord minLength maxLength
+                let wordsInDirection = List.map (fun word -> insertCoordToLetters word realStartCoord direction) possibleWordsInDirection
+                cache <- Map.add (direction, realStartCoord, hardcodedCharacters, hand) wordsInDirection cache
+                wordsInDirection
 
         // Internal helper that collects all possibilities for words that hits
         // the start coordinate in some way in a given direction
@@ -89,13 +106,14 @@ module WordPlacer =
     // Method that returns ALL valid words and their positions based on the current
     // state of the board
     let getValidWordPositions (moves: Map<ScrabbleUtil.coord, char * int>) (board: board) (hand: MultiSet<uint32>) isValidWord pieces =
+        cache <- Map.empty
         let parsedHand = convertHandToPieceList hand pieces
 
         if moves.IsEmpty then
             getAllWordPositions moves board board.center parsedHand isValidWord
         else
             let movesList = Map.toList moves
-            let maxThreads = 8.0
+            let maxThreads = 4.0
             let temp = float movesList.Length / maxThreads
             let amountOfBatches = int (float movesList.Length / temp)
             let batchSize = int (Math.Ceiling temp)
