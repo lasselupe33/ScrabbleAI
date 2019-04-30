@@ -14,6 +14,16 @@ module WordPlacer =
 
     let handSize = 7
 
+    let writeLetter pieces (pieceLetter: (coord * (char * int))) : string =
+        let coord = fst pieceLetter
+        let letter = snd pieceLetter
+
+        sprintf "%i %i %i%c%i" (fst coord) (snd coord) (getPieceId pieces (piece [letter])) (fst letter) (snd letter)
+
+
+    let playMove pieces (word : (coord * (char * int)) list) : string =
+        List.fold ( fun acc letter -> acc + " " + (writeLetter pieces (letter))) "" word
+
     // Very simple helper that returns a new coordinate based on a direction and
     // an index to add to one of the directions
     let getNewCoord coord direction index =
@@ -36,7 +46,7 @@ module WordPlacer =
             else
                 startCoord
 
-        
+
         let rec aux index (hardcodedCharacters: ((char * int) * int) list) startCoord =
             if index = (handSize + hardcodedCharacters.Length) then
                 (startCoord, index, hardcodedCharacters)

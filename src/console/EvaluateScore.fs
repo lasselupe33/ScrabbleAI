@@ -1,4 +1,5 @@
 module EvaluateScore
+open ScrabbleUtil
 
     type tile = char * Map<uint32, uint32 -> (char * int)[] -> int -> int>
 
@@ -43,7 +44,7 @@ module EvaluateScore
         // extract the functions out of the maps into a list
         let flatten tiles =
             List.map (fun tile -> (snd tile)) tiles |>
-            List.reduce (fun acc sublist -> acc @ sublist)
+            List.reduce ( @ )
 
         // Helper that compares the first element of two tuples
         let tileFuncComparator t1 t2 =
@@ -62,3 +63,33 @@ module EvaluateScore
 
         // Calculate points and returns it
         composer (extract (sortFuncTilesByPriority (flatten (prepareTiles tiles))))
+
+    // Method used to evaluate all valid words, and return the word that calculates
+    // the highest score
+    let evaluateListOfValidWords (board: board) (wordsWithCoord: (coord * (char * int)) list list) =
+        let tiles = board.tiles
+
+
+        let getTile coord = Option.get (board.tiles (coord))
+
+        // Find tiles by coord
+        let prepareTiles (piecesWithCoord: (coord * (char * int)) list) =
+            List.fold (fun acc letter -> (getTile (fst letter))::acc) [] piecesWithCoord
+
+        let prepareWords (piecesWithCoord: (coord * (char * int)) list) =
+            List.fold (fun acc letter -> acc @ [(snd letter)]) [] piecesWithCoord |>
+            List.toArray
+
+        let tilesAndWords = List.fold (fun acc word -> ((prepareTiles word, prepareWords word), word)::acc) [] wordsWithCoord
+
+        // If a piece is used, replace tile with usedTile
+        // PieceId??
+
+        // Evaluate score
+        let calculate tileWord = calculatePoints (fst tileWord) (snd tileWord)
+
+        let evaluate = List.fold (fun acc word -> ((calculate (fst word)), snd word)::acc) []
+
+        let result = tilesAndWords |> evaluate |> List.sortBy (fun word -> -(fst word))
+
+        result.Head
