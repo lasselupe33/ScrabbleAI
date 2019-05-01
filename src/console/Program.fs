@@ -26,12 +26,11 @@ let playGame cstream board pieces (st : State.state) isWordValid =
         let hand = convertHandToPieceList st.hand
         let testHand = [getPiece pieces 0u;getPiece pieces 1u;getPiece pieces 2u;getPiece pieces 3u;getPiece pieces 4u;getPiece pieces 5u;getPiece pieces 6u]
         let test = getValidWordPositions st.lettersPlaced board st.hand isWordValid pieces
-        let result = evaluateListOfValidWords board test
-        let inputTest = playMove pieces (snd result)
+        let result = evaluateListOfValidWords board st.lettersPlaced test
+        let input = playMove pieces st.lettersPlaced (snd result)
         stopWatch.Stop();
 
         printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
-        let input =  System.Console.ReadLine()
         let move = RegEx.parseMove input
 
         printfn "Trying to play: %A" move

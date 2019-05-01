@@ -21,8 +21,12 @@ module WordPlacer =
         sprintf "%i %i %i%c%i" (fst coord) (snd coord) (getPieceId pieces (piece [letter])) (fst letter) (snd letter)
 
 
-    let playMove pieces (word : (coord * (char * int)) list) : string =
-        List.fold ( fun acc letter -> acc + " " + (writeLetter pieces (letter))) "" word
+    let playMove pieces (lettersPlaced: Map<coord,(char * int)>) (word : (coord * (char * int)) list) : string =
+        List.fold ( fun acc letter -> 
+            if Option.isNone(lettersPlaced.TryFind(fst letter)) 
+                    then acc + " " + (writeLetter pieces (letter)) 
+                    else "" + acc) "" word
+            
 
     // Very simple helper that returns a new coordinate based on a direction and
     // an index to add to one of the directions
