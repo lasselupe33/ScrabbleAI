@@ -45,11 +45,10 @@ module WordPlacer =
     // possible by, based on holes in board, hardcoded characters and size of hand
     let extractBoardMetaInDirection (moves:  Map<ScrabbleUtil.coord, char * int>) (board: board) coord direction =
         let rec getRealStartCoord startCoord dir =
-            if Option.isNone (board.tiles startCoord) then
+            let coordToCheck = getNewCoord startCoord dir (-1)
+            if Option.isNone (board.tiles startCoord) && Option.isNone (board.tiles (coordToCheck)) then
                 getRealStartCoord (getNewCoord startCoord dir 1) dir
             else
-                let coordToCheck = getNewCoord startCoord dir (-1)
-
                 if (moves.ContainsKey coordToCheck) then
                     getRealStartCoord coordToCheck dir
                 else
@@ -59,19 +58,19 @@ module WordPlacer =
         // index
         let rec getAdjecentWord coord index adjecentDirection charsBefore charsAfter hasFoundCenter =
             let newCoord = getNewCoord coord adjecentDirection index
+            let piece = moves.TryFind newCoord
 
-            if coord = newCoord then
-                getAdjecentWord coord (index + 1) adjecentDirection charsBefore charsAfter true
-            else
-                let piece = moves.TryFind newCoord
 
-                match piece with
-                    | Some foundPiece ->
-                        if not hasFoundCenter then
-                            getAdjecentWord coord (index + 1) adjecentDirection (charsBefore @ [foundPiece]) charsAfter hasFoundCenter
-                        else
-                            getAdjecentWord coord (index + 1) adjecentDirection charsBefore (charsAfter @ [foundPiece]) hasFoundCenter
-                    | None ->
+            match piece with
+                | Some foundPiece ->
+                    if not hasFoundCenter then
+                        getAdjecentWord coord (index - 1) adjecentDirection (foundPiece::charsBefore) charsAfter hasFoundCenter
+                    else
+                        getAdjecentWord coord (index + 1) adjecentDirection charsBefore (charsAfter @ [foundPiece]) hasFoundCenter
+                | None ->
+                    if not hasFoundCenter then
+                        getAdjecentWord coord 1 adjecentDirection charsBefore charsAfter true
+                    else
                         if List.isEmpty charsBefore && List.isEmpty charsAfter then
                             None
                         else
@@ -88,12 +87,10 @@ module WordPlacer =
                 if Option.isNone (board.tiles newCoord) then
                     (coord, index, hardcodedCharacters, adjecentWords)
                 else
-                    let newHardcoded =
+                    let (newHardcoded, adjecentWord) =
                         match Map.tryFind newCoord moves with
-                        | Some piece -> ((piece, index)::hardcodedCharacters)
-                        | None -> hardcodedCharacters
-
-                    let adjecentWord = getAdjecentWord newCoord 0 (getAdjDir direction) [] [] false
+                        | Some piece -> (((piece, index)::hardcodedCharacters), None)
+                        | None -> (hardcodedCharacters, getAdjecentWord newCoord -1 (getAdjDir direction) [] [] false)
 
                     match adjecentWord with
                         | Some adjecentWord -> aux (index + 1) coord newHardcoded ((index, adjecentWord)::adjecentWords)

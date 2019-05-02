@@ -26,26 +26,26 @@ let playGame cstream board pieces (st : State.state) isWordValid =
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
         let hand = convertHandToPieceList st.hand
         let result = getBestWord st.lettersPlaced board st.hand isWordValid pieces
-        
+
         stopWatch.Stop();
 
-        // let input = playMove pieces st.lettersPlaced (snd result)
+        // // let input = playMove pieces st.lettersPlaced (snd result)
+        // // let move = RegEx.parseMove input
+        // printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
+        // let input =  System.Console.ReadLine()
+
         // let move = RegEx.parseMove input
-        printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
-        let input =  System.Console.ReadLine()
-        
-        let move = RegEx.parseMove input
 
-        // // If one exists then play it, else get a new hand
-        // match result with
-        //     | Some r ->
-        //         let input = playMove pieces st.lettersPlaced (snd r)
-        //         let move = RegEx.parseMove input
-        //         printfn "Trying to play: %A" move
-        //         send cstream (SMPlay move)
-        //     | None -> send cstream (SMPlay (RegEx.parseMove "hej"))
+        // If one exists then play it, else get a new hand
+        match result with
+            | Some r ->
+                let input = playMove pieces st.lettersPlaced (snd r)
+                let move = RegEx.parseMove input
+                printfn "Trying to play: %A" move
+                send cstream (SMPlay move)
+            | None -> send cstream (SMPlay (RegEx.parseMove "hej"))
 
-        send cstream (SMPlay move)
+        // send cstream (SMPlay move)
         let msg = recv cstream
         match msg with
         | RCM (CMPlaySuccess(ms, points, newPieces)) ->
@@ -121,7 +121,7 @@ let startGame port numberOfPlayers =
         let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         let handSize = 7u
         let timeout = None
-        let seed = Some 100
+        let seed = Some 5
 
         send cstream (SMStartGame (numberOfPlayers, "My game", "password", "My name", seed, board, pieces,
                                     handSize, alphabet, words, timeout))

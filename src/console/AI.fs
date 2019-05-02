@@ -10,7 +10,7 @@ open System
 open EvaluateScore
 
 module AI =
-    let getBestResult res = List.tryHead (List.sortBy (fun word -> -(fst word)) res)
+    let getBestResult res = List.sortBy (fun r -> (fst r) * -1) res |> List.tryHead
 
     // Entry point for the AI which ensres to call all other methods in an async
     // fashion in order to determien the best playable word based on the current
@@ -20,7 +20,7 @@ module AI =
         let parsedHand = convertHandToPieceList hand pieces
 
         if moves.IsEmpty then
-            (getAllWordPositions moves board board.center parsedHand isValidWord)
+            getBestResult (evaluateValidWords (getAllWordPositions moves board board.center parsedHand isValidWord) board moves)
         else
             let movesList = Map.toList moves
             let maxThreads = 4.0
@@ -30,10 +30,10 @@ module AI =
 
             let tasks = [for i in 0..(amountOfBatches) do yield async {
                 let maxInBatch = min batchSize (movesList.Length - (i + 1) * batchSize)
-                let subMoves = [for j in 0..(maxInBatch) do yield getAllWordPositions moves board (fst movesList.[i * batchSize + j]) parsedHand isValidWord]
+                let subMoves = [for j in 0..(maxInBatch) do yield evaluateValidWords (getAllWordPositions moves board (fst movesList.[i * batchSize + j]) parsedHand isValidWord) board moves]
 
                 return subMoves
             }]
 
             let scores = Array.toList (Async.RunSynchronously (Async.Parallel tasks)) |> fun asyncResult -> flatten (flatten asyncResult)
-            scores
+            getBestResult scores

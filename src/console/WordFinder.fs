@@ -13,7 +13,9 @@ module WordFinder =
     let getPiece (pieces: Map<uint32, piece>) pieceId = (Set.toList (Map.find pieceId pieces))
 
     let getPieceId (pieces: Map<uint32, piece>) pieceValue =
-        Map.findKey (fun _ piece -> piece = pieceValue) pieces
+        match Map.tryFindKey (fun _ piece -> piece = pieceValue) pieces with
+            | Some key -> key
+            | None -> 0u
 
     // Helper that converts the hand of piece identifiers to a list of characters
     let convertHandToPieceList (hand: MultiSet<uint32>) pieces = List.map (getPiece pieces) (MultiSet.toList hand)
