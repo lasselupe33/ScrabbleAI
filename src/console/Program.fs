@@ -18,7 +18,7 @@ open System
 let playGame cstream board pieces (st : State.state) isWordValid =
 
     let rec aux (st : State.state) =
-        Print.printBoard board 8 (State.lettersPlaced st)
+        board.print (State.lettersPlaced st)
         printfn "\n\n"
         Print.printHand pieces (State.hand st)
 
@@ -71,7 +71,7 @@ let setupGame cstream board alphabet words handSize timeout =
         | RCM (CMPlayerJoined name) ->
             printfn "Player %s joined" name
             aux ()
-        | RCM (CMGameStarted (playerNumber, hand, firstPlayer, pieces, players)) as msg ->
+        | RCM (CMGameStarted (playerNumber, hand, numberOfPieces, firstPlayer, pieces, players)) as msg ->
             // Setup function used to handle word validation checks
             let scrabbleDict = Seq.fold (fun dict word -> Dictionary.insert word dict) (Dictionary.empty alphabet) (words)
             let isWordValid word = Dictionary.lookup word scrabbleDict
@@ -103,7 +103,10 @@ let startGame port numberOfPlayers =
         let path = "../../../EnglishDictionary.txt"
         let words = File.ReadLines path |> Seq.toList
         let board = StandardBoard.mkStandardBoard ()
-        let pieces = English.pieces()
+        //let board = InfiniteStandardBoard.mkBoard ()
+        //Make a torus-shaped board with in outer diameter of 10 and an inner diameter of 3
+        //let board = Torus.mkBoard 10 3
+        let pieces = English.pieces 1u (* change the number to scale the number of pieces *)
         let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         let handSize = 7u
         let timeout = None
