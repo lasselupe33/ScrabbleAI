@@ -28,16 +28,22 @@ let playGame cstream board pieces (st : State.state) isWordValid =
         let result = getBestWord st.lettersPlaced board st.hand isWordValid pieces
         stopWatch.Stop();
 
-        // If one exists then play it, else get a new hand
-        match result with
-            | Some r ->
-                let input = playMove pieces st.lettersPlaced (snd r)
-                let move = RegEx.parseMove input
-                printfn "Trying to play: %A" move
-                send cstream (SMPlay move)
-            | None -> send cstream (SMPlay (RegEx.parseMove "hej"))
+        // let input = playMove pieces st.lettersPlaced (snd result)
+        // let move = RegEx.parseMove input
+        printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
+        let input =  System.Console.ReadLine()
+        let move = RegEx.parseMove input
 
+        // // If one exists then play it, else get a new hand
+        // match result with
+        //     | Some r ->
+        //         let input = playMove pieces st.lettersPlaced (snd r)
+        //         let move = RegEx.parseMove input
+        //         printfn "Trying to play: %A" move
+        //         send cstream (SMPlay move)
+        //     | None -> send cstream (SMPlay (RegEx.parseMove "hej"))
 
+        send cstream (SMPlay move)
         let msg = recv cstream
         match msg with
         | RCM (CMPlaySuccess(ms, points, newPieces)) ->

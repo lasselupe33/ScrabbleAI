@@ -44,13 +44,16 @@ module WordPlacer =
     // Furthermore it also determines how long a word in the given direction can
     // possible by, based on holes in board, hardcoded characters and size of hand
     let extractBoardMetaInDirection (moves:  Map<ScrabbleUtil.coord, char * int>) (board: board) coord direction =
-        let rec getRealStartCoord startCoord direction =
-            let coordToCheck = getNewCoord startCoord direction (-1)
-
-            if (moves.ContainsKey coordToCheck) then
-                getRealStartCoord coordToCheck direction
+        let rec getRealStartCoord startCoord dir =
+            if Option.isNone (board.tiles startCoord) then
+                getRealStartCoord (getNewCoord startCoord dir 1) dir
             else
-                startCoord
+                let coordToCheck = getNewCoord startCoord dir (-1)
+
+                if (moves.ContainsKey coordToCheck) then
+                    getRealStartCoord coordToCheck dir
+                else
+                    startCoord
 
         // Helper that extracts and gets words that might be adjecent on a given
         // index

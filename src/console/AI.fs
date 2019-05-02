@@ -20,7 +20,7 @@ module AI =
         let parsedHand = convertHandToPieceList hand pieces
 
         if moves.IsEmpty then
-            getBestResult (evaluateListOfValidWords board moves (getAllWordPositions moves board board.center parsedHand isValidWord))
+            (getAllWordPositions moves board board.center parsedHand isValidWord)
         else
             let movesList = Map.toList moves
             let maxThreads = 4.0
@@ -30,10 +30,10 @@ module AI =
 
             let tasks = [for i in 0..(amountOfBatches) do yield async {
                 let maxInBatch = min batchSize (movesList.Length - (i + 1) * batchSize)
-                let subMoves = [for j in 0..(maxInBatch) do yield evaluateListOfValidWords board moves (getAllWordPositions moves board (fst movesList.[i * batchSize + j]) parsedHand isValidWord)]
+                let subMoves = [for j in 0..(maxInBatch) do yield getAllWordPositions moves board (fst movesList.[i * batchSize + j]) parsedHand isValidWord]
 
                 return subMoves
             }]
 
             let scores = Array.toList (Async.RunSynchronously (Async.Parallel tasks)) |> fun asyncResult -> flatten (flatten asyncResult)
-            getBestResult scores
+            scores

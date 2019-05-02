@@ -35,11 +35,11 @@ module WordFinder =
 
     // Helper to make a list consisting of merging the pieces of the hand and
     // the hardcoded letters from the board together to one list
-    let mergePiecesAndHardcodedLetters  (pieces: (char * int) list) 
-                                        (hardcodedPieces: ((char * int) * int) list) 
+    let mergePiecesAndHardcodedLetters  (pieces: (char * int) list)
+                                        (hardcodedPieces: ((char * int) * int) list)
                                         (adjecentWords: (int * ((char * int) list * (char * int) list)) list) =
 
-        let checkAdjecentWords index accx letter = 
+        let checkAdjecentWords index accx letter =
             List.fold (fun acc word -> if index = fst word then acc @ [(fst (snd word) @ [letter] @ (snd (snd word)))] else acc) accx adjecentWords
 
         // Internal helper that checks whether the passed index match with the
@@ -58,7 +58,7 @@ module WordFinder =
                 let newAcc = checkCoordinates acc index
 
                 // If lenghts are the same...
-                if newAcc.Length = acc.Length
+                if newAcc.Head.Length = acc.Head.Length
                     // ...there was no hardcoded piece added on that index,
                     // just return acc and end the recursive process
                     then acc
@@ -69,28 +69,32 @@ module WordFinder =
                 let newAcc = checkCoordinates acc index
 
                 // If lenghts are the same...
-                if newAcc.Length = acc.Length
+                if newAcc.Head.Length = acc.Head.Length
                     // ...there was no hardcoded piece added on that index,
                     // append normal piece instead and proceed...
                     then
-                        let acc2 = checkAdjecentWords index acc x 
-                        let acc3 = ((acc2.Head @ [x])::acc2.Tail)
+                        let acc2 = checkAdjecentWords index acc x
+                        let acc2Head = List.tryHead acc2
+                        let acc3 = match acc2Head with
+                            | Some head -> ((head @ [x])::acc2.Tail)
+                            | None -> [x]::acc2
+
                         aux (index + 1) acc3 xs
-                    // ...else pass the newAcc and old list instead, as the
-                    // hardcoded piece have a place on the current index
-                    else aux (index + 1) newAcc list
+                // ...else pass the newAcc and old list instead, as the
+                // hardcoded piece have a place on the current index
+                else aux (index + 1) newAcc list
 
         // Begin recursive progress on index 0 and with an
         // empty accumulator
-        aux 0 [] pieces
+        aux 0 [[]] pieces
 
     // Helper that help find different combinations of valid words based on a
     // list of chars
-    let collectWords    lettersList 
-                        (hardcodedLettersList: ((char * int) * int) list) 
-                        (adjecentWords: (int * ((char * int) list * (char * int) list)) list) 
-                        isWordValid 
-                        minLength 
+    let collectWords    lettersList
+                        (hardcodedLettersList: ((char * int) * int) list)
+                        (adjecentWords: (int * ((char * int) list * (char * int) list)) list)
+                        isWordValid
+                        minLength
                         maxLength =
 
         // First recursive helper, with first parameter being the remaining letters
@@ -143,12 +147,12 @@ module WordFinder =
 
             // Check if words at current step are valid
             let validWords = if hardcodedLettersList.IsEmpty
-                                then  
+                                then
                                     // If there is no hardcoded letters, just check if the acc word is valid
                                     if (acc.Length >= minLength) && isWordValid (convertPiecesToString acc)
                                         then [acc]::currentValidWords
-                                        else currentValidWords                                    
-                                else 
+                                        else currentValidWords
+                                else
                                     // ...else merge the current hand and hardcoded letters together, and check
                                     // if all words (including those that comes with the adjecent words) are
                                     // valid
