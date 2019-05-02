@@ -67,7 +67,7 @@ open MBrace.FsPickler.CSharpProxy
 
     // Method used to evaluate all valid words, and return the word that calculates
     // the highest score
-    let evaluateListOfValidWords (board: board) (lettersPlaced: Map<coord,(char * int)>) (wordsWithCoord: (coord * (char * int)) list list list) =
+    let evaluateListOfValidWords (board: board) (lettersPlaced: Map<coord,(char * int)>) (collectionOfWordClauses: (coord * (char * int)) list list list) =
 
         let getTile coord = Option.get (board.tiles (coord))
 
@@ -82,14 +82,22 @@ open MBrace.FsPickler.CSharpProxy
             List.fold (fun acc letter -> acc @ [(snd letter)]) [] piecesWithCoord |>
             List.toArray
 
-        let tilesAndWords = List.fold (fun acc word -> ((prepareTiles word, prepareWords word), word)::acc) [] wordsWithCoord
+        let prepareTilesAndWords (wordsWithCoord: (coord * (char * int)) list list) = 
+            List.fold (fun acc words -> ((prepareTiles words, prepareWords words), words)::acc) [] wordsWithCoord
+
+        let tilesAndWords = List.fold (fun acc wordClause -> (prepareTilesAndWords wordClause)::acc) [] collectionOfWordClauses
+ 
 
         // Evaluate score
         let calculate tileWord = calculatePoints (fst tileWord) (snd tileWord)
 
-        let evaluate = List.fold (fun acc word -> ((calculate (fst word)), snd word)::acc) []
+        let evaluate = List.fold (fun acc word -> (calculate (fst word)) + acc) 0
 
-        let result = tilesAndWords |> evaluate
+        let evaluateClause wordClause = 
+            let calculatedPoints = List.fold (fun acc word -> ((evaluate word), word)::acc) [] wordClause
+            (calculatedPoints, wordClause)
+            
+        let result = tilesAndWords |> evaluateClause
 
         let temp = tilesAndWords
 
