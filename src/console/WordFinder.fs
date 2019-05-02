@@ -153,14 +153,17 @@ module WordFinder =
                                         then [acc]::currentValidWords
                                         else currentValidWords
                                 else
-                                    // ...else merge the current hand and hardcoded letters together, and check
-                                    // if all words (including those that comes with the adjecent words) are
-                                    // valid
-                                    let wordsWithHardcodedLetters = mergePiecesAndHardcodedLetters acc hardcodedLettersList adjecentWords
-                                    let wordsBool = List.fold (fun accx word -> isWordValid (convertPiecesToString word)::accx) [] wordsWithHardcodedLetters
-                                    if wordsBool |> List.contains false
-                                        then currentValidWords
-                                        else wordsWithHardcodedLetters::currentValidWords
+                                    if (acc.Length >= minLength) then
+                                        // ...else merge the current hand and hardcoded letters together, and check
+                                        // if all words (including those that comes with the adjecent words) are
+                                        // valid
+                                        let wordsWithHardcodedLetters = mergePiecesAndHardcodedLetters acc hardcodedLettersList adjecentWords
+                                        let wordsBool = List.fold (fun accx word -> isWordValid (convertPiecesToString word)::accx) [] wordsWithHardcodedLetters
+                                        if wordsBool |> List.contains false
+                                            then currentValidWords
+                                            else wordsWithHardcodedLetters::currentValidWords
+                                    else
+                                        currentValidWords
 
             // Call first recursive function with the new word and list
             aux xs acc validWords

@@ -78,15 +78,15 @@ module WordPlacer =
                             Some (charsBefore, charsAfter)
 
 
-        let rec aux index startCoord (hardcodedCharacters: ((char * int) * int) list) adjecentWords =
+        let rec aux index coord (hardcodedCharacters: ((char * int) * int) list) adjecentWords =
             if index = (handSize + hardcodedCharacters.Length) then
-                (startCoord, index, hardcodedCharacters, adjecentWords)
+                (coord, index, hardcodedCharacters, adjecentWords)
             else
-                let newCoord = getNewCoord startCoord direction index
+                let newCoord = getNewCoord coord direction index
 
                 // Check if we've reached the end or a hole in the board
                 if Option.isNone (board.tiles newCoord) then
-                    (startCoord, index, hardcodedCharacters, adjecentWords)
+                    (coord, index, hardcodedCharacters, adjecentWords)
                 else
                     let newHardcoded =
                         match Map.tryFind newCoord moves with
@@ -96,8 +96,8 @@ module WordPlacer =
                     let adjecentWord = getAdjecentWord newCoord 0 (getAdjDir direction) [] [] false
 
                     match adjecentWord with
-                        | Some adjecentWord -> aux (index + 1) startCoord newHardcoded ((index, adjecentWord)::adjecentWords)
-                        | None -> aux (index + 1) startCoord newHardcoded adjecentWords
+                        | Some adjecentWord -> aux (index + 1) coord newHardcoded ((index, adjecentWord)::adjecentWords)
+                        | None -> aux (index + 1) coord newHardcoded adjecentWords
 
         aux 0 (getRealStartCoord coord direction) [] []
 
@@ -118,11 +118,12 @@ module WordPlacer =
     let getAllWordPositions (moves) (board: board) (startCoord: coord) (hand: (char * int) list list) isValidWord =
         // Internal helper that extracts all possible positions a single word can
         // remain within
-        let getWordsInDirection startCoord direction minLength =
+        let getWordsInDirection startCoord direction initialMinLength =
             let (realStartCoord, maxLength, hardcodedCharacters, adjecentWords) = extractBoardMetaInDirection moves board startCoord direction
             if Map.containsKey (direction, realStartCoord, hardcodedCharacters, hand) cache then
                 Map.find (direction, realStartCoord, hardcodedCharacters, hand) cache
             else
+                let minLength = if hardcodedCharacters.IsEmpty then initialMinLength else snd hardcodedCharacters.[hardcodedCharacters.Length - 1]
                 let possibleWordsInDirection = collectWords hand hardcodedCharacters adjecentWords isValidWord minLength maxLength
                 let wordsInDirection = List.map (fun words -> List.map (fun word -> insertCoordToLetters word realStartCoord direction) words) possibleWordsInDirection
                 cache <- Map.add (direction, realStartCoord, hardcodedCharacters, hand) wordsInDirection cache
