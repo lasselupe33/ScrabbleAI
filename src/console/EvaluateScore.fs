@@ -73,9 +73,9 @@ open MBrace.FsPickler.CSharpProxy
     let evaluateValidWords (collectionOfWordClauses: (coord * (char * int)) list list list) (board: board) (lettersPlaced: Map<coord,(char * int)>) =
         let getTile coord = Option.get (board.tiles (coord))
 
-        let prepareTiles (piecesWithCoord: (coord * (char * int)) list) =
+        let prepareTiles (piecesWithCoord: (coord * (char * int)) list) isMainWord =
             List.fold (fun acc letter ->
-                if Option.isSome(lettersPlaced.TryFind(fst letter))
+                if Option.isSome(lettersPlaced.TryFind(fst letter)) || not isMainWord
                     then acc @ [board.usedTile]
                     else acc @ [(getTile (fst letter))]) [] piecesWithCoord
 
@@ -84,7 +84,7 @@ open MBrace.FsPickler.CSharpProxy
             List.toArray
 
         let prepareTilesAndWords (wordsWithCoord: (coord * (char * int)) list list) = 
-            List.fold (fun acc words -> acc @ [((prepareTiles words, prepareWords words), words)]) [] wordsWithCoord
+            List.fold (fun acc words -> acc @ [((prepareTiles words acc.IsEmpty, prepareWords words), words)]) [] wordsWithCoord
 
         let tilesAndWords = List.fold (fun acc wordClause -> (prepareTilesAndWords wordClause)::acc) [] collectionOfWordClauses
 
@@ -96,43 +96,5 @@ open MBrace.FsPickler.CSharpProxy
             List.fold (fun acc word -> ((evaluate word), snd word.Head)::acc) [] wordClause
             
         let result = tilesAndWords |> evaluateClause
-
-        result
-
-
-    // Method used to evaluate all valid words, and return the word that calculates
-    // the highest score
-    let evaluateListOfValidWords (board: board) (lettersPlaced: Map<coord,(char * int)>) (collectionOfWordClauses: (coord * (char * int)) list list list) =
-
-        let getTile coord = Option.get (board.tiles (coord))
-
-        // Find tiles by coord
-        let prepareTiles (piecesWithCoord: (coord * (char * int)) list) isMainWord =
-            List.fold (fun acc letter ->
-                if Option.isSome(lettersPlaced.TryFind(fst letter)) || not isMainWord
-                    then board.usedTile::acc
-                    else (getTile (fst letter))::acc) [] piecesWithCoord
-
-        let prepareWords (piecesWithCoord: (coord * (char * int)) list) =
-            List.fold (fun acc letter -> acc @ [(snd letter)]) [] piecesWithCoord |>
-            List.toArray
-
-        let prepareTilesAndWords (wordsWithCoord: (coord * (char * int)) list list) = 
-            List.fold (fun acc words -> ((prepareTiles words acc.IsEmpty, prepareWords words), words)::acc) [] wordsWithCoord
-
-        let tilesAndWords = List.fold (fun acc wordClause -> (prepareTilesAndWords wordClause)::acc) [] collectionOfWordClauses
-
-        // Evaluate score
-        let calculate tileWord = calculatePoints (fst tileWord) (snd tileWord)
-
-        let evaluate = List.fold (fun acc word -> (calculate (fst word)) + acc) 0
-
-        let evaluateClause wordClause = 
-            let calculatedPoints = List.fold (fun acc word -> ((evaluate word), word)::acc) [] wordClause
-            (calculatedPoints, wordClause)
-            
-        let result = tilesAndWords |> evaluateClause
-
-        let temp = tilesAndWords
 
         result
