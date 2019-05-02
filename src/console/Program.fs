@@ -26,12 +26,17 @@ let playGame cstream board pieces (st : State.state) isWordValid =
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
         let hand = convertHandToPieceList st.hand
         let result = getBestWord st.lettersPlaced board st.hand isWordValid pieces
+
+        let test = evaluateValidWords [[[((0,3), ('C', 7)); ((0,4), ('U', 2)); ((0,5), ('S', 5))]]] board st.lettersPlaced
         stopWatch.Stop();
+
+        
 
         // let input = playMove pieces st.lettersPlaced (snd result)
         // let move = RegEx.parseMove input
         printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
         let input =  System.Console.ReadLine()
+        
         let move = RegEx.parseMove input
 
         // // If one exists then play it, else get a new hand
