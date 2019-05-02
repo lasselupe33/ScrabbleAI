@@ -9,6 +9,8 @@ open System
 module WordPlacer =
     type Direction = Down | Right
 
+    let getAdjDir dir = if dir = Down then Right else Down
+
     // Maps a direction, startCoord, a list of hardcoded chars and the current hand to a matching result
     let mutable cache: Map<(Direction * coord * ((char * int) * int) list * (char * int) list list), (coord * (char * int)) list list> = Map.empty
 
@@ -22,11 +24,11 @@ module WordPlacer =
 
 
     let playMove pieces (lettersPlaced: Map<coord,(char * int)>) (word : (coord * (char * int)) list) : string =
-        List.fold ( fun acc letter -> 
-            if Option.isNone(lettersPlaced.TryFind(fst letter)) 
-                    then acc + " " + (writeLetter pieces (letter)) 
+        List.fold ( fun acc letter ->
+            if Option.isNone(lettersPlaced.TryFind(fst letter))
+                    then acc + " " + (writeLetter pieces (letter))
                     else "" + acc) "" word
-            
+
 
     // Very simple helper that returns a new coordinate based on a direction and
     // an index to add to one of the directions
@@ -42,33 +44,59 @@ module WordPlacer =
     // Furthermore it also determines how long a word in the given direction can
     // possible by, based on holes in board, hardcoded characters and size of hand
     let extractBoardMetaInDirection (moves:  Map<ScrabbleUtil.coord, char * int>) (board: board) coord direction =
-        let rec getRealStartCoord startCoord =
+        let rec getRealStartCoord startCoord direction =
             let coordToCheck = getNewCoord startCoord direction (-1)
 
             if (moves.ContainsKey coordToCheck) then
-                getRealStartCoord coordToCheck
+                getRealStartCoord coordToCheck direction
             else
                 startCoord
 
+        // Helper that extracts and gets words that might be adjecent on a given
+        // index
+        let rec getAdjecentWord coord index adjecentDirection charsBefore charsAfter hasFoundCenter =
+            let newCoord = getNewCoord coord adjecentDirection index
 
-        let rec aux index (hardcodedCharacters: ((char * int) * int) list) startCoord =
+            if coord = newCoord then
+                getAdjecentWord coord (index + 1) adjecentDirection charsBefore charsAfter true
+            else
+                let piece = moves.TryFind newCoord
+
+                match piece with
+                    | Some foundPiece ->
+                        if not hasFoundCenter then
+                            getAdjecentWord coord (index + 1) adjecentDirection (charsBefore @ [foundPiece]) charsAfter hasFoundCenter
+                        else
+                            getAdjecentWord coord (index + 1) adjecentDirection charsBefore (charsAfter @ [foundPiece]) hasFoundCenter
+                    | None ->
+                        if List.isEmpty charsBefore && List.isEmpty charsAfter then
+                            None
+                        else
+                            Some (charsBefore, charsAfter)
+
+
+        let rec aux index startCoord (hardcodedCharacters: ((char * int) * int) list) adjecentWords =
             if index = (handSize + hardcodedCharacters.Length) then
-                (startCoord, index, hardcodedCharacters)
+                (startCoord, index, hardcodedCharacters, adjecentWords)
             else
                 let newCoord = getNewCoord startCoord direction index
 
                 // Check if we've reached the end or a hole in the board
                 if Option.isNone (board.tiles newCoord) then
-                    (startCoord, index, hardcodedCharacters)
+                    (startCoord, index, hardcodedCharacters, adjecentWords)
                 else
                     let newHardcoded =
                         match Map.tryFind newCoord moves with
                         | Some piece -> ((piece, index)::hardcodedCharacters)
                         | None -> hardcodedCharacters
 
-                    aux (index + 1) newHardcoded startCoord
+                    let adjecentWord = getAdjecentWord newCoord 0 (getAdjDir direction) [] [] false
 
-        aux 0 [] (getRealStartCoord coord)
+                    match adjecentWord with
+                        | Some adjecentWord -> aux (index + 1) startCoord newHardcoded ((index, adjecentWord)::adjecentWords)
+                        | None -> aux (index + 1) startCoord newHardcoded adjecentWords
+
+        aux 0 (getRealStartCoord coord direction) [] []
 
     // Helper that'll take a word (list of chars with points) and a start coordinate
     // and then add corresponding coordinates to the pieces based on direction.
@@ -88,7 +116,7 @@ module WordPlacer =
         // Internal helper that extracts all possible positions a single word can
         // remain within
         let getWordsInDirection startCoord direction minLength =
-            let (realStartCoord, maxLength, hardcodedCharacters) = extractBoardMetaInDirection moves board startCoord direction
+            let (realStartCoord, maxLength, hardcodedCharacters, adjecentWords) = extractBoardMetaInDirection moves board startCoord direction
             if Map.containsKey (direction, realStartCoord, hardcodedCharacters, hand) cache then
                 Map.find (direction, realStartCoord, hardcodedCharacters, hand) cache
             else
@@ -110,35 +138,5 @@ module WordPlacer =
             aux 0 []
 
         (flatten (checkAllPossibilitiesInDirection Down)) @ (flatten (checkAllPossibilitiesInDirection Right))
-
-
-    // Method that verifies whether or not a word is valid based on the letters
-    // that is in the opposite direction of the word itself
-    let canPlaceWordOnBoard board word =
-        true
-
-    // Method that returns ALL valid words and their positions based on the current
-    // state of the board
-    let getValidWordPositions (moves: Map<ScrabbleUtil.coord, char * int>) (board: board) (hand: MultiSet<uint32>) isValidWord pieces =
-        cache <- Map.empty
-        let parsedHand = convertHandToPieceList hand pieces
-
-        if moves.IsEmpty then
-            getAllWordPositions moves board board.center parsedHand isValidWord
-        else
-            let movesList = Map.toList moves
-            let maxThreads = 4.0
-            let temp = float movesList.Length / maxThreads
-            let amountOfBatches = int (float movesList.Length / temp)
-            let batchSize = int (Math.Ceiling temp)
-
-            let tasks = [for i in 0..(amountOfBatches) do yield async {
-                let maxInBatch = min batchSize (movesList.Length - (i + 1) * batchSize)
-                let subMoves = [for j in 0..(maxInBatch) do yield getAllWordPositions moves board (fst movesList.[i * batchSize + j]) parsedHand isValidWord]
-
-                return subMoves
-            }]
-
-            Array.toList (Async.RunSynchronously (Async.Parallel tasks)) |> fun asyncResult -> flatten (flatten asyncResult)
 
 

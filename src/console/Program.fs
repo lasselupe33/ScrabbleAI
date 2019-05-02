@@ -22,19 +22,22 @@ let playGame cstream board pieces (st : State.state) isWordValid =
         printfn "\n\n"
         Print.printHand pieces (State.hand st)
 
+        // Retrieve best word
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
         let hand = convertHandToPieceList st.hand
-        let testHand = [getPiece pieces 0u;getPiece pieces 1u;getPiece pieces 2u;getPiece pieces 3u;getPiece pieces 4u;getPiece pieces 5u;getPiece pieces 6u]
-        let test = getValidWordPositions st.lettersPlaced board st.hand isWordValid pieces
-        let result = evaluateListOfValidWords board st.lettersPlaced test
-        let input = playMove pieces st.lettersPlaced (snd result)
+        let result = getBestWord st.lettersPlaced board st.hand isWordValid pieces
         stopWatch.Stop();
 
-        printfn "Input move (format '(<x-coordinate><y-coordinate> <piece id><character><point-value> )*', note the absence of state between the last inputs)"
-        let move = RegEx.parseMove input
+        // If one exists then play it, else get a new hand
+        match result with
+            | Some r ->
+                let input = playMove pieces st.lettersPlaced (snd r)
+                let move = RegEx.parseMove input
+                printfn "Trying to play: %A" move
+                send cstream (SMPlay move)
+            | None -> send cstream (SMPlay (RegEx.parseMove "hej"))
 
-        printfn "Trying to play: %A" move
-        send cstream (SMPlay move)
+
         let msg = recv cstream
         match msg with
         | RCM (CMPlaySuccess(ms, points, newPieces)) ->
@@ -46,12 +49,12 @@ let playGame cstream board pieces (st : State.state) isWordValid =
             let updatedMoves = addMovesToMap st.lettersPlaced ms
             let updatedHand = addPiecesToHand handWithPlayedPiecesRemoved newPieces
 
-            let st' = mkState (st.ownPoints + points) updatedMoves updatedHand st.currentPlayerId st.playerList
+            let st' = mkState (st.ownPoints + points) updatedMoves updatedHand st.currentPlayerId st.playerList (st.tilesLeft - (uint32 ms.Length))
             aux st'
         | RCM (CMPlayed (pid, ms, points)) ->
             (* Successful play by other player. Update your state *)
             let updatedMoves = addMovesToMap st.lettersPlaced ms
-            let st' = mkState st.ownPoints updatedMoves st.hand st.currentPlayerId st.playerList // This state needs to be updated
+            let st' = mkState st.ownPoints updatedMoves st.hand st.currentPlayerId st.playerList (st.tilesLeft - (uint32 ms.Length)) // This state needs to be updated
             aux st'
         | RCM (CMPlayFailed (pid, ms)) ->
             (* Failed play. Update your state *)
@@ -78,7 +81,7 @@ let setupGame cstream board alphabet words handSize timeout =
 
             printfn "Game started %A" msg
             let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
-            playGame cstream board pieces (State.newState handSet playerNumber players) isWordValid
+            playGame cstream board pieces (State.newState handSet playerNumber players numberOfPieces) isWordValid
         | msg -> failwith (sprintf "Game initialisation failed. Unexpected message %A" msg)
 
     aux ()

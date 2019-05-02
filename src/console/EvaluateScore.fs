@@ -73,9 +73,9 @@ open MBrace.FsPickler.CSharpProxy
 
         // Find tiles by coord
         let prepareTiles (piecesWithCoord: (coord * (char * int)) list) =
-            List.fold (fun acc letter -> 
-                if Option.isSome(lettersPlaced.TryFind(fst letter)) 
-                    then board.usedTile::acc 
+            List.fold (fun acc letter ->
+                if Option.isSome(lettersPlaced.TryFind(fst letter))
+                    then board.usedTile::acc
                     else (getTile (fst letter))::acc) [] piecesWithCoord
 
         let prepareWords (piecesWithCoord: (coord * (char * int)) list) =
@@ -89,6 +89,8 @@ open MBrace.FsPickler.CSharpProxy
 
         let evaluate = List.fold (fun acc word -> ((calculate (fst word)), snd word)::acc) []
 
-        let result = tilesAndWords |> evaluate |> List.sortBy (fun word -> -(fst word))
+        let result = tilesAndWords |> evaluate
 
-        result.Head
+        let temp = tilesAndWords
+
+        result

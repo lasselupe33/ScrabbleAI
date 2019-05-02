@@ -10,14 +10,16 @@ module State =
         ownPoints       : int
         lettersPlaced   : Map<ScrabbleUtil.coord, char * int>
         hand            : MultiSet.MultiSet<uint32>
+        tilesLeft       : uint32
     }
 
-    let mkState p lp h cp plist = {
+    let mkState p lp h cp plist tleft = {
         ownPoints = p;
         lettersPlaced = lp;
         hand = h;
         currentPlayerId = cp;
         playerList = plist;
+        tilesLeft = tleft;
     }
 
     let newState hand startPlayerId playerList = mkState 0 Map.empty hand startPlayerId playerList
