@@ -12,7 +12,7 @@ module WordPlacer =
     let getAdjDir dir = if dir = Down then Right else Down
 
     // Maps a direction, startCoord, a list of hardcoded chars and the current hand to a matching result
-    let mutable cache: Map<(Direction * coord * ((char * int) * int) list * (char * int) list list), (coord * (char * int)) list list> = Map.empty
+    let mutable cache: Map<(Direction * coord * ((char * int) * int) list * (char * int) list list), (coord * (char * int)) list list list> = Map.empty
 
     let handSize = 7
 
@@ -120,8 +120,8 @@ module WordPlacer =
             if Map.containsKey (direction, realStartCoord, hardcodedCharacters, hand) cache then
                 Map.find (direction, realStartCoord, hardcodedCharacters, hand) cache
             else
-                let possibleWordsInDirection = collectWords hand hardcodedCharacters isValidWord minLength maxLength
-                let wordsInDirection = List.map (fun word -> insertCoordToLetters word realStartCoord direction) possibleWordsInDirection
+                let possibleWordsInDirection = collectWords hand hardcodedCharacters adjecentWords isValidWord minLength maxLength
+                let wordsInDirection = List.map (fun words -> List.map (fun word -> insertCoordToLetters word realStartCoord direction) words) possibleWordsInDirection
                 cache <- Map.add (direction, realStartCoord, hardcodedCharacters, hand) wordsInDirection cache
                 wordsInDirection
 

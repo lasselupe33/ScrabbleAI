@@ -67,7 +67,7 @@ open MBrace.FsPickler.CSharpProxy
 
     // Method used to evaluate all valid words, and return the word that calculates
     // the highest score
-    let evaluateListOfValidWords (board: board) (lettersPlaced: Map<coord,(char * int)>) (wordsWithCoord: (coord * (char * int)) list list) =
+    let evaluateListOfValidWords (board: board) (lettersPlaced: Map<coord,(char * int)>) (wordsWithCoord: (coord * (char * int)) list list list) =
 
         let getTile coord = Option.get (board.tiles (coord))
 
