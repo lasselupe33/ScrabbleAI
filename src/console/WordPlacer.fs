@@ -116,27 +116,30 @@ module WordPlacer =
         // Internal helper that extracts all possible positions a single word can
         // remain within
         let getWordsInDirection startCoord direction initialMinLength =
-            let (realStartCoord, maxLength, hardcodedCharacters, adjecentWords) = extractBoardMetaInDirection moves board startCoord direction
-            if Map.containsKey (direction, realStartCoord, hardcodedCharacters, hand) cache then
-                Map.find (direction, realStartCoord, hardcodedCharacters, hand) cache
+            if not State.isRunningAsync then
+                [[[]]]
             else
-                let minLength = if hardcodedCharacters.IsEmpty then initialMinLength else snd hardcodedCharacters.[hardcodedCharacters.Length - 1]
-                let possibleWordsInDirection = collectWords hand hardcodedCharacters adjecentWords isValidWord minLength maxLength
-                let wordsInDirection = List.map (fun words -> List.map (fun word -> insertCoordToLetters word realStartCoord direction) words) possibleWordsInDirection
-                cache <- Map.add (direction, realStartCoord, hardcodedCharacters, hand) wordsInDirection cache
-                wordsInDirection
+                let (realStartCoord, maxLength, hardcodedCharacters, adjecentWords) = extractBoardMetaInDirection moves board startCoord direction
+                if Map.containsKey (direction, realStartCoord, hardcodedCharacters, hand) cache then
+                    Map.find (direction, realStartCoord, hardcodedCharacters, hand) cache
+                else
+                    let minLength = if hardcodedCharacters.IsEmpty then initialMinLength else snd hardcodedCharacters.[hardcodedCharacters.Length - 1]
+                    let possibleWordsInDirection = collectWords hand hardcodedCharacters adjecentWords isValidWord minLength maxLength
+                    let wordsInDirection = List.map (fun words -> List.map (fun word -> insertCoordToLetters word realStartCoord direction) words) possibleWordsInDirection
+                    cache <- Map.add (direction, realStartCoord, hardcodedCharacters, hand) wordsInDirection cache
+                    wordsInDirection
 
         // Internal helper that collects all possibilities for words that hits
         // the start coordinate in some way in a given direction
         let checkAllPossibilitiesInDirection direction =
             let rec aux index acc =
-                if index = handSize then
+                if index = handSize || not State.isRunningAsync then
                     acc
                 else
                     let newCoord = getNewCoord startCoord direction (index * -1)
                     aux (index + 1) ((getWordsInDirection newCoord direction (index + 1))::acc)
 
-            aux 0 []
+            aux 0 [[]]
 
         (flatten (checkAllPossibilitiesInDirection Down)) @ (flatten (checkAllPossibilitiesInDirection Right))
 

@@ -9,8 +9,12 @@ open System.Collections.Generic
 module WordFinder =
     // Simple helper that based on a pieceId extracts the Char that is related to
     // it.
-    // NOTE: It doesn't handle wildcards gracefully yet!
-    let getPiece (pieces: Map<uint32, piece>) pieceId = (Set.toList (Map.find pieceId pieces))
+    // Currently we've commented Logic out to use all pieces of the WildCard since
+    // it makes our AI perform too slow. If you'd like to unleash the full potential
+    // of the wildcards, simply comment in the line below
+    //
+    // let getPiece (pieces: Map<uint32, piece>) pieceId = (Set.toList (Map.find pieceId pieces))
+    let getPiece (pieces: Map<uint32, piece>) pieceId = [(Set.toList (Map.find pieceId pieces)).Head]
 
     let getPieceId (pieces: Map<uint32, piece>) pieceValue =
         match Map.tryFindKey (fun _ piece -> piece = pieceValue) pieces with
@@ -104,11 +108,10 @@ module WordFinder =
         // and the accumulator being the "word" (list of pieces) that is currently being processed
         // to find new possible words
         let rec aux (letters: (char * int) list list) (acc: (char * int) list) (currentValidWords: (char * int) list list list)  =
-
             // If the word exceeds the maximum index (which means it will go over the
             // board limits), then it will just return the current valid words, else
             // it will continue its recursive run
-            if maxLength <= (acc.Length + hardcodedLettersList.Length)
+            if maxLength <= (acc.Length + hardcodedLettersList.Length) || not State.isRunningAsync
                 then
                     currentValidWords
                 else
@@ -137,38 +140,43 @@ module WordFinder =
             match letters with
             | [] -> currentValidWords
             | x::xs ->
-                let potentialNewWords = List.map (fun letter -> aux3 xs (acc @ [letter]) currentValidWords ) x
+                if not State.isRunningAsync then
+                    currentValidWords
+                else
+                    let potentialNewWords = List.map (fun letter -> aux3 xs (acc @ [letter]) currentValidWords ) x
 
-                // Add the char to the word string
-                List.reduce ( @ ) potentialNewWords
+                    // Add the char to the word string
+                    List.reduce ( @ ) potentialNewWords
 
         // Third and final helper that checks if the passed pieces forms a vaild
         // word, and in that case append it to the accumulator of valid words,
         // and finally continue the process with the remaining pieces of the hand
         and aux3 xs (acc: (char * int) list) (currentValidWords: (char * int) list list list) =
-
-            // Check if words at current step are valid
-            let validWords = if hardcodedLettersList.IsEmpty
-                                then
-                                    // If there is no hardcoded letters, just check if the acc word is valid
-                                    if (acc.Length >= minLength) && isWordValid (convertPiecesToString acc)
-                                        then [acc]::currentValidWords
-                                        else currentValidWords
-                                else
-                                    if (acc.Length >= minLength) then
-                                        // ...else merge the current hand and hardcoded letters together, and check
-                                        // if all words (including those that comes with the adjecent words) are
-                                        // valid
-                                        let wordsWithHardcodedLetters = mergePiecesAndHardcodedLetters acc hardcodedLettersList adjecentWords
-                                        let wordsBool = List.fold (fun accx word -> isWordValid (convertPiecesToString word)::accx) [] wordsWithHardcodedLetters
-                                        if wordsBool |> List.contains false
-                                            then currentValidWords
-                                            else wordsWithHardcodedLetters::currentValidWords
+            if not State.isRunningAsync then
+                currentValidWords
+            else
+                // Check if words at current step are valid
+                let validWords = if hardcodedLettersList.IsEmpty
+                                    then
+                                        // If there is no hardcoded letters, just check if the acc word is valid
+                                        if (acc.Length >= minLength) && isWordValid (convertPiecesToString acc)
+                                            then [acc]::currentValidWords
+                                            else currentValidWords
                                     else
-                                        currentValidWords
+                                        if (acc.Length >= minLength) then
+                                            // ...else merge the current hand and hardcoded letters together, and check
+                                            // if all words (including those that comes with the adjecent words) are
+                                            // valid
+                                            let wordsWithHardcodedLetters = mergePiecesAndHardcodedLetters acc hardcodedLettersList adjecentWords
+                                            let wordsBool = List.fold (fun accx word -> isWordValid (convertPiecesToString word)::accx) [] wordsWithHardcodedLetters
+                                            if wordsBool |> List.contains false
+                                                then currentValidWords
+                                                else wordsWithHardcodedLetters::currentValidWords
+                                        else
+                                            currentValidWords
 
-            // Call first recursive function with the new word and list
-            aux xs acc validWords
+                // Call first recursive function with the new word and list
+                aux xs acc validWords
 
         // Invoke search for all valid words given list of chars
         let allValidWords = aux lettersList [] []
