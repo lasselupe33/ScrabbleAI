@@ -29,10 +29,12 @@ module AI =
             let batchSize = int (Math.Ceiling temp)
 
             let tasks = [for i in 0..(amountOfBatches) do yield async {
-                let maxInBatch = min batchSize (movesList.Length - (i + 1) * batchSize)
-                let subMoves = [for j in 0..(maxInBatch) do yield evaluateValidWords (getAllWordPositions moves board (fst movesList.[i * batchSize + j]) parsedHand isValidWord) board moves]
-
-                return subMoves
+                let maxInBatch = max 0 (min batchSize ((movesList.Length - (i) * batchSize)))
+                if maxInBatch = 0 then
+                    return []
+                else
+                    let subMoves = [for j in 1..(maxInBatch) do yield evaluateValidWords (getAllWordPositions moves board (fst movesList.[i * batchSize + j - 1]) parsedHand isValidWord) board moves]
+                    return subMoves
             }]
 
             let scores = Array.toList (Async.RunSynchronously (Async.Parallel tasks)) |> fun asyncResult -> flatten (flatten asyncResult)
