@@ -19,3 +19,6 @@ module Utils =
 
     let flatten list =
         List.reduce (@) list
+
+
+    let getNextPlayerId currPlayerId state = fst state.playerList.[((List.findIndex (fun elm -> currPlayerId = fst elm) state.playerList) + 1) % state.playerList.Length]
