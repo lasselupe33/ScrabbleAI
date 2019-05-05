@@ -139,7 +139,7 @@ let startGame port numberOfPlayers =
         let pieces = English.pieces 1u (* change the number to scale the number of pieces *)
         let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         let handSize = 7u
-        let timeout = None
+        let timeout = Some 6000u
         let seed = Some 19
 
         send cstream (SMStartGame (numberOfPlayers, "My game", "password", "My name", seed, board, pieces,
