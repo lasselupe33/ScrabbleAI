@@ -14,15 +14,15 @@ open WordFinder
 
 open System.Net.Sockets
 open System
+open utils.MultiSet
 
 let playGame cstream board pieces (st : State.state) isWordValid (timeout: uint32 option) =
     let rec aux (st : State.state) =
         if st.ownId = 1u then
             board.print (State.lettersPlaced st)
             printfn "\n\n"
-        //Print.printHand pieces (State.hand st)
 
-        // Retrieve best word
+        // Retrieve best word if our turn
         if st.currentPlayerId = st.ownId then
             let result = getBestWord st.lettersPlaced board st.hand isWordValid pieces timeout st.turn
 
@@ -32,7 +32,11 @@ let playGame cstream board pieces (st : State.state) isWordValid (timeout: uint3
                     let input = playMove pieces st.lettersPlaced (snd r)
                     let move = RegEx.parseMove input
                     send cstream (SMPlay move)
-                | None -> send cstream (SMPlay (RegEx.parseMove "hej"))
+                | None ->
+                    if st.tilesLeft > 6u then
+                        send cstream (SMChange (toList st.hand))
+                    else
+                        send cstream (SMPass)
 
         let msg = recv cstream
         match msg with
@@ -69,6 +73,15 @@ let playGame cstream board pieces (st : State.state) isWordValid (timeout: uint3
             let newPlayerList = List.filter (fun player -> fst player <> pid) st.playerList
             let currPlayer = if st.currentPlayerId = pid then getNextPlayerId pid st else st.currentPlayerId
             let st' = mkState st.ownPoints st.lettersPlaced st.hand currPlayer st.ownId newPlayerList st.tilesLeft st.turn
+            aux st'
+        | RCM (CMChangeSuccess newHand) ->
+            printfn "We changed our hand, w00."
+            let updatedHand = (addPiecesToHand MultiSet.empty newHand)
+            let st' = mkState st.ownPoints st.lettersPlaced updatedHand (getNextPlayerId st.ownId st) st.ownId st.playerList st.tilesLeft st.turn
+            aux st'
+        | RCM (CMChange (playerId, changedHand)) ->
+            printfn "Player with id '%A' changed their hand.\n\n" playerId
+            let st' = mkState st.ownPoints st.lettersPlaced st.hand (getNextPlayerId st.ownId st) st.ownId st.playerList st.tilesLeft st.turn
             aux st'
         | RCM (CMGameOver finalScores) ->
             List.map (fun score -> printf "Player with '%A' scored %A points.\n" (fst score) (snd score)) finalScores
