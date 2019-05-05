@@ -18,9 +18,8 @@ open utils.MultiSet
 
 let playGame cstream board pieces (st : State.state) isWordValid (timeout: uint32 option) =
     let rec aux (st : State.state) =
-        if st.ownId = 1u then
-            board.print (State.lettersPlaced st)
-            printfn "\n\n"
+        board.print (State.lettersPlaced st)
+        printfn "\n\n"
 
         // Retrieve best word if our turn
         if st.currentPlayerId = st.ownId then
