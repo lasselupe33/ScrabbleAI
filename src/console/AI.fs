@@ -34,7 +34,7 @@ module AI =
                 | Some tout ->
                     let po = new ParallelOptions()
                     po.MaxDegreeOfParallelism <- System.Environment.ProcessorCount
-                    use cts = new System.Threading.CancellationTokenSource(int tout - 2500) // give time for tasks to finish up etc
+                    use cts = new System.Threading.CancellationTokenSource(int tout - (min (int tout) 2500)) // give time for tasks to finish up etc
                     po.CancellationToken <- cts.Token
 
                     try
