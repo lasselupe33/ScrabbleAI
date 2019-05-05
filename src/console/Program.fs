@@ -14,6 +14,7 @@ open WordFinder
 
 open System.Net.Sockets
 open System
+open utils.MultiSet
 
 let playGame cstream board pieces (st : State.state) isWordValid (timeout: uint32 option) =
     let rec aux (st : State.state) =
@@ -38,7 +39,11 @@ let playGame cstream board pieces (st : State.state) isWordValid (timeout: uint3
                 let move = RegEx.parseMove input
                 printfn "Trying to play: %A" move
                 send cstream (SMPlay move)
-            | None -> send cstream (SMPlay (RegEx.parseMove "hej"))
+            | None -> 
+                if st.tilesLeft > 6u then
+                    send cstream (SMChange (toList st.hand))
+                else 
+                    send cstream (SMPass)                    
 
         // send cstream (SMPlay move)
         let msg = recv cstream
@@ -63,12 +68,17 @@ let playGame cstream board pieces (st : State.state) isWordValid (timeout: uint3
             (* Failed play. Update your state *)
             let st' = st // This state needs to be updated
             aux st'
+        | RCM (CMChangeSuccess newHand) ->
+            let updatedHand = removePieceFromHand 
+            let st' = mkState st.ownPoints st.lettersPlaced (addPiecesToHand st.hand newHand) st.currentPlayerId st.playerList st.tilesLeft (st.turn + 1)
+            aux st'
+        | RCM (CMChange (playerId, changedHand)) -> 
+            let st' = mkState st.ownPoints st.lettersPlaced st.hand st.currentPlayerId st.playerList st.tilesLeft (st.turn + 1)
+            aux st'              
         | RCM (CMGameOver _) -> ()
         | RCM a -> failwith (sprintf "not implmented: %A" a)
         | RErr err -> printfn "Server Error:\n%A" err; aux st
         | RGPE err -> printfn "Gameplay Error:\n%A" err; aux st
-
-
     aux st
 
 let setupGame cstream board alphabet words handSize timeout =
