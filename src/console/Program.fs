@@ -41,7 +41,7 @@ let playGame cstream board pieces (st : State.state) isWordValid (timeout: uint3
         let msg = recv cstream
         match msg with
         | RCM (CMPlaySuccess(ms, points, newPieces)) ->
-            printfn "Success!!!\n Total points: %A\n Moves left: %A" (st.ownPoints + points) (st.tilesLeft - (min st.tilesLeft (uint32 ms.Length)))
+            printfn "Success!!!\n Total points: %A\n Pieces left: %A" (st.ownPoints + points) (st.tilesLeft - (min st.tilesLeft (uint32 ms.Length)))
 
             (* Successful play by you. Update your state *)
             let handWithPlayedPiecesRemoved = removeUsedPiecesFromHand st.hand ms
