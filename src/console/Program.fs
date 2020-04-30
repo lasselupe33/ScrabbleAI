@@ -157,7 +157,7 @@ let startGame port numberOfPlayers =
 
 [<EntryPoint>]
 let main argv =
-    [Comm.startServer 13000; startGame 13000 2u] |>
+    [Comm.startServer 13000; startGame 13000 1u] |>
     Async.Parallel |>
     Async.RunSynchronously |> ignore
     0 // return an integer exit code
